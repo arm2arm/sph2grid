@@ -1,10 +1,11 @@
-#summary One-sentence summary of this page.
+#summary SPH particles to volume grid assigner.
+#labels COSMOLOGY,gadget-2,SPH,hydrodynamics,gasdynamics,CLUES,galaxy,galaxyformation,disk
 
 = Introduction =
 
 sph2grid is used to produce this slice from the GADGET-2 cosmological snapshot.
 
-
+[http://sph2grid.googlecode.com/svn/wiki/WikiPageName.attach/gas_snap_497_1024.png]
 
 = Details =
 
