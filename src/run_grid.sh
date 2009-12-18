@@ -1,0 +1,1 @@
+./sph2grid /dnas01/arm2arm/DATA/BHDisk/WIND/LGR2Mpc_sfrh_143 0 22899.2441 29786.7148 26687.2090 1000 $1  
