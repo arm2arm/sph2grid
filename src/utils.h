@@ -25,7 +25,7 @@ public:
 		sum(x);
 	};
 void Reset(void ){Min=1e10; Max=-1e10;m_sum=0;m_np=0;};
-void print(char *str){
+void print(const char *str){
 	cout<<str<<" Min="<<Min<<"\tMax="<<Max<<"\t mean="<<m_sum/m_np<<endl;
 
 };

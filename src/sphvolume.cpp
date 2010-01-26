@@ -482,7 +482,7 @@ protected:
     
     nelem=0;
     nelem=g->read_blockv3(pPOS, 
-			"POS ",
+			  "POS ",
 			m_type);
     
     if(nelem==0)
@@ -515,7 +515,7 @@ void FreeSphMemory()
   DeallocateVol3D(vol3d);
   DeallocateVol3D(vol3dsm);
 }
-void printStat(float *pV, char* txt, int np)
+void printStat(float *pV, const char* txt, int np)
 {
   CRange range;
   range.Reset();
