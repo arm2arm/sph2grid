@@ -20,4 +20,5 @@ void  SmoothSPHVolume(int sm ); /*BoxCar smoothing of the 3D volume, similar thi
 
 bool DoSph2Grid(string fname, string foutname,int type,
 		float XC,float YC,float ZC,float RC,int GRID);/* Main routine to calculate the SPH2GRID */
+extern float ***vol3d;
 #endif
