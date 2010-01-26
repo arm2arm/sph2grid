@@ -47,7 +47,7 @@ CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
 am_sph2grid_OBJECTS = main.$(OBJEXT) sphvolume.$(OBJEXT) \
-	data_readers.$(OBJEXT) utils.$(OBJEXT)
+	data_readers.$(OBJEXT) utils.$(OBJEXT) Render.$(OBJEXT)
 sph2grid_OBJECTS = $(am_sph2grid_OBJECTS)
 sph2grid_LDADD = $(LDADD)
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
@@ -159,8 +159,12 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 sph2grid_SOURCES = main.cpp sphvolume.cpp sphvolume.h \
 		    data_readers.cpp data_readers.h\
-		    utils.h utils.cpp
+		    utils.h utils.cpp\
+                    Render.cpp Render.h
 
+# what flags you want to pass to the C compiler & linker
+AM_CPPFLAGS = -I/usr/X11R6/include -I/home/arm2arm/Projects/CImg
+AM_LDFLAGS = -lpthread -lX11 -lXext -lXrandr
 all: all-am
 
 .SUFFIXES:
@@ -245,6 +249,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Render.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/data_readers.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sphvolume.Po@am__quote@
@@ -464,7 +469,6 @@ uninstall-am: uninstall-binPROGRAMS
 	mostlyclean-compile mostlyclean-generic pdf pdf-am ps ps-am \
 	tags uninstall uninstall-am uninstall-binPROGRAMS
 
-# what flags you want to pass to the C compiler & linker
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

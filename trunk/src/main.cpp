@@ -85,8 +85,8 @@ int main(int argc, char* argv[])
 	ZC=atoi(argv[5]),
 	RC=atoi(argv[6]);      
       /////////////////////////////////////////
+      
       DoSph2Grid(fname, foutname,type,XC,YC,ZC,RC,GRID);
-
       /////////////////////////////////////////
       cout<<"done"<<endl;
     }
