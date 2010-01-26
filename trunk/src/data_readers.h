@@ -13,6 +13,7 @@
 #include <iostream>
 #include <sstream> 
 #include <stdlib.h>
+#include <cstring>
 #ifdef WIN32
 #include <conio.h>
 #endif
@@ -537,10 +538,10 @@ class CGadget : public  CReaders
 		bool GetStars(CRegion reg, bool flag_putin_COM=false);
 		bool GetBH(CRegion reg);
 		bool CheckRhoFile(CRegion reg);
-		unsigned int read_block(float *&pV, char *name, int t);
-		unsigned int read_blockv3(float *&pV, char *name, int t);
+		unsigned int read_block(float *&pV, const char *name, int t);
+		unsigned int read_blockv3(float *&pV, const char *name, int t);
 		void WriteRhoFile(string rhofilename, int type=4);
-		void WriteOneBlock(ostream &file,string blname, char* pData, unsigned int datasize);
+		void WriteOneBlock(ostream &file,string blname, const char* pData, unsigned int datasize);
 		bool GetSPHParticles(int type, CRegion reg, bool flag_putin_COM);
 		bool m_isgood;
 		string m_name;

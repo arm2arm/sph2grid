@@ -9,7 +9,7 @@ CTimer timer;//timer for tests
 /////////////////////////////
 // Checks if a file exists //
 /////////////////////////////
-bool FileExists(char* filename) {
+bool FileExists(const char* filename) {
 
 	ifstream file;
 	file.open(filename);
@@ -94,7 +94,7 @@ bool GetSnapName( string &snapio, int &isnap)
 	while(snap.find_first_of("_")!=0)
 		{
 		indexCh=snap.find_first_of("_");
-		dig_snap=dig_snap.assign(snap,int(indexCh+1), int(4));
+		dig_snap=dig_snap.assign(snap,int(indexCh+1), int(3));
 		if (StringToInt(dig_snap, isnap))
 			{
 			snap=dig_snap;
@@ -556,7 +556,7 @@ bool CGadget::GetSPHParticles(int type, CRegion reg, bool flag_putin_COM)
 	return true;
 	};
 /*ReadOneBlock*/
-unsigned int CGadget::read_block(float *&pV, char *name, int t)
+unsigned int CGadget::read_block(float *&pV, const char *name, int t)
 {
   pV=new float[myhead.npart[t]];
   unsigned int sizeall=find_block(&m_file, name);
@@ -569,7 +569,7 @@ unsigned int CGadget::read_block(float *&pV, char *name, int t)
 
 };
 /*ReadOneBlock*/
-unsigned int CGadget::read_blockv3(float *&pV, char *name, int t)
+unsigned int CGadget::read_blockv3(float *&pV, const char *name, int t)
 {
   pV=new float[myhead.npart[t]*3];
   unsigned int sizeall=find_block(&m_file, name);
@@ -584,7 +584,7 @@ unsigned int CGadget::read_blockv3(float *&pV, char *name, int t)
 };
 
 /*Write One block*/
-void CGadget::WriteOneBlock(ostream &file,string blname, char* pData, unsigned int datasize)
+void CGadget::WriteOneBlock(ostream &file, string blname,const char* pData, unsigned int datasize)
 	{
 		unsigned int blsize, idata;
 		/*write block name*/
