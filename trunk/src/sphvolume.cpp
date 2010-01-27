@@ -412,7 +412,7 @@ public:
         float *pPot=NULL;
         CGadget *g = new CGadget(m_infile, false);
         int nparticles = g->read_block(pPot,
-                "POT",
+                "POT ",
                 1);
         if(nparticles >0)
         {
