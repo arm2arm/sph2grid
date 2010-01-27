@@ -24,6 +24,7 @@ if(help){
   cout<<"\n***********************************************************"<<endl;
   cout<<"Reads RHO and HSML blocks for the gas particles from the input file and\n"<<
     "generates density file on the regular grid defined by the input parameters.\n"<<
+     "The center and the bounding box size for the grid is defined by XC YC ZC RC.\n The GRID is definig the grid size in the X and Y directions for the Z direction will be used GRID*zfac.\n The zfac is useful to make a big projected slices.\n"<<
     "If user require Type>0 of the particles it will seek files with extension \"*_rho_type\".\n"<<
     "Example:\n"<<
     "If you have a snapshot name snap_200 and you require TYPE=1 then\n"<<
@@ -31,7 +32,7 @@ if(help){
     "and \"RHO1\" for the densities.\n"<<endl;
   }
 
-  cout<<"\nUsage:\n"<<execname<<" [FILEIN] [type] [XC YC ZC RC] [GRID]"<<endl;	
+  cout<<"\nUsage:\n"<<execname<<" [FILEIN] [type] [XC YC ZC RC] [GRID] [zfac]"<<endl;
  
 if(!help) cout<<"For more help:\n"<<execname<<" -help \n"<<endl;
  if(help) cout<<"***********************************************************\n"<<endl;
@@ -41,7 +42,7 @@ if(!help) cout<<"For more help:\n"<<execname<<" -help \n"<<endl;
 
 int main(int argc, char* argv[])
 {
-  if(argc!=8)
+  if(argc!=10)
     {
       //Under linux directory separator given by "/"
       char* pch=strrchr(argv[0], '/');
@@ -83,10 +84,12 @@ int main(int argc, char* argv[])
 	XC=atoi(argv[3]),
 	YC=atoi(argv[4]),
 	ZC=atoi(argv[5]),
-	RC=atoi(argv[6]);      
+	RC=atoi(argv[6]),
+        zfac=atof(argv[8]),
+        hsml=atof(argv[9]);
       /////////////////////////////////////////
       
-      DoSph2Grid(fname, foutname,type,XC,YC,ZC,RC,GRID);
+      DoSph2Grid(fname, foutname,type,XC,YC,ZC,RC,GRID, zfac, hsml);
       /////////////////////////////////////////
       cout<<"done"<<endl;
     }

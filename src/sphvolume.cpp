@@ -394,7 +394,7 @@ public:
 
         if (!ReadData()) {
             cout << "Fail to read data...exiting" << endl;
-            EXIT_FAIL;
+            //EXIT_FAIL;
         }
     };
 
@@ -408,15 +408,31 @@ public:
     unsigned int GetNp() {
         return nelem;
     };
+    void SetAutoCOM(float &x, float &y, float &z){
+        float *pPot=NULL;
+        CGadget *g = new CGadget(m_infile, false);
+        int nparticles = g->read_block(pPot,
+                "POT",
+                1);
+        if(nparticles >0)
+        {
+        float *mi=std::min_element(pPot, pPot+nparticles);
+        int ip=(int)(mi-pPot);
+        std::cout<<pPOS[ip]<<" "<<pPOS[ip+1]<<" "<<pPOS[ip+2]<<endl;
+        x=pPOS[ip];y=pPOS[ip+1];z=pPOS[ip+2];
+        }
+        saveFree(pPot);
+    };
 protected:
 
     bool ReadData() {
         CGadget *m_gin = new CGadget(m_infile, false);
         bool ans;
 
-        ans = GetRhoBlock(m_gin);
-        ans = ans && GetHsmlBlock(m_gin);
-        ans = ans && GetPosBlock(m_gin);
+        ans = GetPosBlock(m_gin);
+        int npcurrent=GetNp();//store the current number of particles
+        if(!GetHsmlBlock(m_gin))nelem=npcurrent;
+        if(!GetRhoBlock(m_gin))nelem=npcurrent;
         return ans;
     };
 
@@ -502,7 +518,9 @@ void printStat(float *pV, const char* txt, int np) {
 }
 
 bool DoSph2Grid(string fname, string foutname, int type,
-        float XC, float YC, float ZC, float RC, int GRID) {
+        float XC, float YC, float ZC, float RC, int GRID, float zfac=1.0f, float hsml_in_kpc=0.5) {
+    bool volume_flag=false;
+    bool render_flag = true;
     /*Some checks */
     if (GRID < 16) {
         cout << "\nError:\nGrid should be > 16 you have: " << GRID << endl;
@@ -512,17 +530,21 @@ bool DoSph2Grid(string fname, string foutname, int type,
         cout << "\nError:\nRc  should be > 0 you have:  " << RC << endl;
         EXIT_FAIL;
     }
-    if (type != 0) {
+    if (type != 0 && volume_flag) {
         cout << "\nError:\nIn this version of the code\n" <<
                 "the Type  should be  0 you have:  " << type << endl;
         EXIT_FAIL;
     }
     /***********************/
-    CGetData *data = new CGetData(fname);
+    CGetData *data = new CGetData(fname, type);
+
+    if(XC==0 && YC==0 && ZC==0)
+    data->SetAutoCOM(XC, YC, ZC);
+   
     /***********************/
     np = data->GetNp();
     nx = ny = nz = GRID;
-
+    nz*=zfac;
 
     cout << "Np: " << np << " GRID= " << nx << " " << ny << " " << nz << endl;
     if (np > 1) {
@@ -540,6 +562,7 @@ bool DoSph2Grid(string fname, string foutname, int type,
     printStat(data->pHSML, "HSML range: ", np);
     unsigned int ni = 0;
     float RC2 = RC * 2;
+    float fixed_hsml=hsml_in_kpc*nx/RC2;// Setup the smoothing length in kpc/h
     for (unsigned int i = 0, ic = 0; ic < np; ic++) {
         X[ni] = (data->pPOS[i ] - XC);
         Y[ni] = (data->pPOS[i + 1] - YC);
@@ -568,18 +591,22 @@ bool DoSph2Grid(string fname, string foutname, int type,
     cout << "Particles in region Ni=" << ni << " Out of total: " << np << endl;
     ;
     np = ni;
-    DoSPHVolume();
+    if(volume_flag)
+    {
+        DoSPHVolume();
 
-    cout << "Wrinting GRID data to the output file: " << foutname << endl;
+    cout << "Writing GRID data to the output file: " << foutname << endl;
     WriteSPHGRIDVolume(foutname, type,
             XC, YC, ZC, RC, GRID);
-////////////////////////////////////////////
-    bool render_flag = true;
+    }
+    ////////////////////////////////////////////
+    
     if (render_flag) {
         CRender *pRenderer = new CRender();
 
-        pRenderer->DoRender(vol3d, GRID);
-
+        if(volume_flag)pRenderer->DoRenderByGrid(vol3d, GRID, zfac);
+        else
+        pRenderer->DoRenderByPoints(X,Y,Z,fixed_hsml,np, GRID);
         delete pRenderer;
 
     }

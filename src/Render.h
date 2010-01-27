@@ -13,8 +13,15 @@ public:
     CRender();
     CRender(const CRender& orig);
     virtual ~CRender();
-    void DoRender(float ***vol3d, int GRID=128);
+    void DoRenderByGrid(float ***vol3d, int GRID=128, float zfac=1.0);
+    void DoRenderByPoints(float *X, float *Y,float *Z, float hsml, int np, int GRID=128);
+    float GetMinRho(void){return min_rho;};
+    float GetMaxRho(void){return max_rho;};
+    void SetMinMaxRho(float _min_rho, float _max_rho){
+        min_rho=min_rho;max_rho=_max_rho;
+    };
 private:
+    float min_rho, max_rho;
 
 };
 
