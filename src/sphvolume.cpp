@@ -408,20 +408,39 @@ public:
     unsigned int GetNp() {
         return nelem;
     };
-    void SetAutoCOM(float &x, float &y, float &z){
-        float *pPot=NULL;
+
+    void SetAutoCOM(float &x, float &y, float &z) {
+        float *pPot = NULL;
         CGadget *g = new CGadget(m_infile, false);
         int nparticles = g->read_block(pPot,
                 "POT ",
-                1);
-        if(nparticles >0)
-        {
-        float *mi=std::min_element(pPot, pPot+nparticles);
-        int ip=(int)(mi-pPot);
-        std::cout<<pPOS[ip]<<" "<<pPOS[ip+1]<<" "<<pPOS[ip+2]<<endl;
-        x=pPOS[ip];y=pPOS[ip+1];z=pPOS[ip+2];
+                6);
+        if (nparticles > 0) {
+            int ip = 0;
+
+            for (int i = 1; i < nparticles; i++)
+                if (pPot[ip] > pPot[i]) {
+                    ip = i;
+                    //cout << i << " " << pPot[i] << endl;
+                }
+            saveFree(pPot);
+            float *pP;
+            if (nparticles != g->read_blockv3(pP,
+                    "POS ",
+                    6))EXIT_FAIL;
+            std::cout << nparticles << " " << ip
+                    << " " << pP[ip*3]
+                    << " " << pP[ip*3 + 1]
+                    << " " << pP[ip*3 + 2] << endl;
+           
+            x = pP[ip*3];
+            y = pP[ip*3 + 1];
+            z = pP[ip*3 + 2];
+            saveFree(pP);
+           
+            
         }
-        saveFree(pPot);
+
     };
 protected:
 
@@ -430,9 +449,9 @@ protected:
         bool ans;
 
         ans = GetPosBlock(m_gin);
-        int npcurrent=GetNp();//store the current number of particles
-        if(!GetHsmlBlock(m_gin))nelem=npcurrent;
-        if(!GetRhoBlock(m_gin))nelem=npcurrent;
+        int npcurrent = GetNp(); //store the current number of particles
+        if (!GetHsmlBlock(m_gin))nelem = npcurrent;
+        if (!GetRhoBlock(m_gin))nelem = npcurrent;
         return ans;
     };
 
@@ -518,8 +537,8 @@ void printStat(float *pV, const char* txt, int np) {
 }
 
 bool DoSph2Grid(string fname, string foutname, int type,
-        float XC, float YC, float ZC, float RC, int GRID, float zfac=1.0f, float hsml_in_kpc=0.5) {
-    bool volume_flag=false;
+        float XC, float YC, float ZC, float RC, int GRID, float zfac = 1.0f, float hsml_in_kpc = 0.5) {
+    bool volume_flag = false;
     bool render_flag = true;
     /*Some checks */
     if (GRID < 16) {
@@ -538,21 +557,23 @@ bool DoSph2Grid(string fname, string foutname, int type,
     /***********************/
     CGetData *data = new CGetData(fname, type);
 
-    if(XC==0 && YC==0 && ZC==0)
-    data->SetAutoCOM(XC, YC, ZC);
-   
+    if (XC == 0 && YC == 0 && ZC == 0)
+        data->SetAutoCOM(XC, YC, ZC);
+
     /***********************/
     np = data->GetNp();
     nx = ny = nz = GRID;
-    nz*=zfac;
+    nz *= zfac;
 
     cout << "Np: " << np << " GRID= " << nx << " " << ny << " " << nz << endl;
     if (np > 1) {
         X = new float[np];
         Y = new float[np];
         Z = new float[np];
+
         rho = new float[np];
         hsml = new float[np];
+        if(volume_flag)
         AllocateVol3D(vol3d);
     } else
         exit(13);
@@ -562,7 +583,7 @@ bool DoSph2Grid(string fname, string foutname, int type,
     printStat(data->pHSML, "HSML range: ", np);
     unsigned int ni = 0;
     float RC2 = RC * 2;
-    float fixed_hsml=hsml_in_kpc*nx/RC2;// Setup the smoothing length in kpc/h
+    float fixed_hsml = hsml_in_kpc * nx / RC2; // Setup the smoothing length in kpc/h
     for (unsigned int i = 0, ic = 0; ic < np; ic++) {
         X[ni] = (data->pPOS[i ] - XC);
         Y[ni] = (data->pPOS[i + 1] - YC);
@@ -589,28 +610,27 @@ bool DoSph2Grid(string fname, string foutname, int type,
     printStat(Y, "Y range: ", ni);
     printStat(Z, "Z range: ", ni);
     cout << "Particles in region Ni=" << ni << " Out of total: " << np << endl;
-    ;
+    
     np = ni;
-    if(volume_flag)
-    {
+    if (volume_flag) {
         DoSPHVolume();
 
-    cout << "Writing GRID data to the output file: " << foutname << endl;
-    WriteSPHGRIDVolume(foutname, type,
-            XC, YC, ZC, RC, GRID);
+        cout << "Writing GRID data to the output file: " << foutname << endl;
+        WriteSPHGRIDVolume(foutname, type,
+                XC, YC, ZC, RC, GRID);
     }
     ////////////////////////////////////////////
-    
+
     if (render_flag) {
         CRender *pRenderer = new CRender();
-
-        if(volume_flag)pRenderer->DoRenderByGrid(vol3d, GRID, zfac);
+        pRenderer->SetColorTable(13);
+        if (volume_flag)pRenderer->DoRenderByGrid(vol3d, GRID, zfac);
         else
-        pRenderer->DoRenderByPoints(X,Y,Z,fixed_hsml,np, GRID);
+            pRenderer->DoRenderByPoints(X, Y, Z, fixed_hsml, np, GRID);
         delete pRenderer;
 
     }
-/////////////////////////////////////////////
+    /////////////////////////////////////////////
 
 
 
