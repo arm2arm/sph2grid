@@ -23,9 +23,9 @@ using namespace cimg_library;
 #include "utils.h"
 
 
-CRender::CRender() {
+CRender::CRender():color_table(4) {
     // Just print the current CImg settings.
-    cimg_library::cimg::info();
+    //cimg_library::cimg::info();
     this->SetMinMaxRho(-7.0f,3.0f);
 }
 
@@ -118,25 +118,30 @@ void CRender::DoRenderByPoints(float *X, float *Y, float *Z, float hsml, int np,
     float  dx, dy, dist, factor_normalize=1.0;
     
     CEpanechikov<float> kernel(3);
+    float h1=1.0f/(float)hsml;
     for (int ip = 0; ip < np; ip++) {
+        
         irange[0] = (int) (X[ip] - hsml);
         irange[1] = (int) (X[ip] + hsml);
         jrange[0] = (int) (Y[ip] - hsml);
         jrange[1] = (int) (Y[ip] + hsml);
         clamp2<int>(irange, 0, GRID);
         clamp2<int>(jrange, 0, GRID);
+        
         //factor_normalize=1.0f/(4.0f/3.0f*M_PI*(hsml*hsml*hsml));
         for (j = jrange[0]; j < jrange[1]; j++) {
-            dy=(j-Y[ip])/hsml;
+            dy=(j-Y[ip])*h1;
             for (i = irange[0]; i < irange[1]; i++)
             {
-                dx=(i-X[ip])/hsml;
-                dist=std::sqrt(dx*dx+dy*dy);
-            /*    std::cout<<"i="<<i<<" j="<<j<<" "<<irange[0]<<" "<<irange[1]
-                        <<" dx="<<dx<<" dy="<<dy<<" dist="<<dist<<std::endl;
-                 std::cin.get();
-                */
-                image(i, j, 0, 0) += kernel.W(dist); //Red
+                dx=(i-X[ip])*h1;
+                dist=(dx*dx+dy*dy);
+                if(dist>4.0f) continue;
+                
+                //std::cout<<"i="<<i<<" j="<<j<<" "<<irange[0]<<" "<<irange[1]
+                //        <<" dx="<<dx<<" dy="<<dy<<" dist="<<dist<<std::endl;
+                // std::cin.get();
+                
+                image(i, j, 0, 0) += kernel.W(std::sqrt(dist)); //Red
                 //image(i, j, 0, 1) = image(i, j); //Green
                 //image(i, j, 2) = image(i, j); //Blue
 
@@ -160,7 +165,7 @@ void CRender::DoRenderByPoints(float *X, float *Y, float *Z, float hsml, int np,
 
     
     image = image.normalize(0, 255);
-   CImg<float> palette=CImg<float>::IDL_LUT256(13);
+   CImg<float> palette=CImg<float>::IDL_LUT256(color_table);
     cimg_forXY(image, x, y) {
       int ind=image(x, y);
       const unsigned char col[]={palette(0,ind,0),palette(0,ind,1),palette(0,ind,2)};

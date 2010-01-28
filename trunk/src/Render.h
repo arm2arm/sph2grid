@@ -20,9 +20,10 @@ public:
     void SetMinMaxRho(float _min_rho, float _max_rho){
         min_rho=min_rho;max_rho=_max_rho;
     };
+ void   SetColorTable(int i){color_table=i;};
 private:
     float min_rho, max_rho;
-
+    int color_table;
 };
 
 #endif	/* _RENDER_H */

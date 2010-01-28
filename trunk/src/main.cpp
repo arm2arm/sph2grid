@@ -72,7 +72,7 @@ int main(int argc, char* argv[])
       if(!GetSnapName(foutname, isnap))
 	{     
 	  cout<<"Cannot extract file name from file: "<<fname<<endl;
-	  return EXIT_FILE_NOT_FOUND;
+	  //return EXIT_FILE_NOT_FOUND;
 	}
       foutname=foutname+"_grid";
       cout<<"In File: "<<fname<<endl;

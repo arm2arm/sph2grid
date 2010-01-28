@@ -558,28 +558,43 @@ bool CGadget::GetSPHParticles(int type, CRegion reg, bool flag_putin_COM)
 /*ReadOneBlock*/
 unsigned int CGadget::read_block(float *&pV, const char *name, int t)
 {
-  pV=new float[myhead.npart[t]];
+    int nall=myhead.npart[t];
+    if(t==6)
+    {
+        nall=0;
+        for(int i=0;i<6;i++)
+            nall+=myhead.npart[i];
+    }
+    pV=new float[nall];
   unsigned int sizeall=find_block(&m_file, name);
   cout<<name<<endl;
   if(sizeall<1) return 0;
   GetBlk(&m_file, &blk);		
-  my_fread(pV, sizeof(float)*myhead.npart[t], 1, &m_file);
-  swap_Nbyte((char*)pV,myhead.npart[t],4);
-  return myhead.npart[t];
+  my_fread(pV, sizeof(float)*nall, 1, &m_file);
+  swap_Nbyte((char*)pV,nall,4);
+  return nall;
 
 };
 /*ReadOneBlock*/
 unsigned int CGadget::read_blockv3(float *&pV, const char *name, int t)
 {
-  pV=new float[myhead.npart[t]*3];
+    int nall=myhead.npart[t];    
+    if(t==6)
+    {
+        nall=0;
+        for(int i=0;i<6;i++)
+            nall+=myhead.npart[i];
+    }
+  pV=new float[nall*3];
   unsigned int sizeall=find_block(&m_file, name);
   cout<<name<<endl;
   if(sizeall<1) return 0;
-  GetBlk(&m_file, &blk);		
-  SeekToType(&m_file,t, sizeof(float)*3);
-  my_fread(pV, sizeof(float)*myhead.npart[t], 3, &m_file);
-  swap_Nbyte((char*)pV,myhead.npart[t]*3,4);
-  return myhead.npart[t];
+  GetBlk(&m_file, &blk);
+  if(t !=6)SeekToType(&m_file,t, sizeof(float)*3);
+  else SeekToType(&m_file,0, sizeof(float)*3);
+  my_fread(pV, sizeof(float)*nall, 3, &m_file);
+  swap_Nbyte((char*)pV,nall*3,4);
+  return nall;
 
 };
 
