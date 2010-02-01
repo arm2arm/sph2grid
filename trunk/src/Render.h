@@ -15,7 +15,8 @@ public:
     virtual ~CRender();
     void DoRenderByGrid(float ***vol3d, int GRID=128, float zfac=1.0);
     void DoRenderByPoints(float *X, float *Y,float *Z, float hsml, int np, int GRID=128);
-    float GetMinRho(void){return min_rho;};
+    void DoRenderByAdaptivePoints(float *X, float *Y, float *Z,float *rho, float *hsml, int np, int GRID);
+  float GetMinRho(void){return min_rho;};
     float GetMaxRho(void){return max_rho;};
     void SetMinMaxRho(float _min_rho, float _max_rho){
         min_rho=min_rho;max_rho=_max_rho;

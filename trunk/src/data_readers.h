@@ -488,6 +488,7 @@ class CGadget : public  CReaders
 			if(!FileExists(m_filename)){cout<<"Can not find file: \n"<< m_filename<<endl;
 				m_isgood=false;
 			//exit(EXIT_FILE_NOT_FOUND);
+				return;
 				};
 			m_file.open(m_filename.c_str(),  ios::in|ios::binary);
 

@@ -21,6 +21,14 @@ void saveFree(float* v) {
         v = NULL;
     }
 }
+void printStat(float *pV, const char* txt, int np) {
+    CRange range;
+    range.Reset();
+    for (unsigned int ip = 0; ip < np; ip++) {
+        range.getbound(pV[ip]);
+    }
+    range.print(txt);
+}
 
 float Wsph(float rr, float h) {
     float retval = 0;
@@ -390,7 +398,7 @@ public:
 
     CGetData(string file, int type = 0) : m_infile(file),
     m_type(type), pHSML(NULL),
-    pRHO(NULL), pPOS(NULL) {
+    pRHO(NULL), pPOS(NULL),rho_loaded(false), hsml_loaded(false) {
 
         if (!ReadData()) {
             cout << "Fail to read data...exiting" << endl;
@@ -428,7 +436,7 @@ public:
             if (nparticles != g->read_blockv3(pP,
                     "POS ",
                     6))EXIT_FAIL;
-            std::cout << nparticles << " " << ip
+            std::cout <<"AutoCOM result:" <<nparticles << " " << ip
                     << " " << pP[ip*3]
                     << " " << pP[ip*3 + 1]
                     << " " << pP[ip*3 + 2] << endl;
@@ -442,7 +450,18 @@ public:
         }
 
     };
+public:
+  bool rho_loaded, hsml_loaded;
 protected:
+  std::string intToString(int i)
+  {
+    std::stringstream ss;
+    std::string s;
+    ss << i;
+    s = ss.str();
+    
+    return s;
+  }
 
     bool ReadData() {
         CGadget *m_gin = new CGadget(m_infile, false);
@@ -450,8 +469,18 @@ protected:
 
         ans = GetPosBlock(m_gin);
         int npcurrent = GetNp(); //store the current number of particles
-        if (!GetHsmlBlock(m_gin))nelem = npcurrent;
-        if (!GetRhoBlock(m_gin))nelem = npcurrent;
+	if(m_type!=0)
+	  {
+	    string ext="_rho_"+intToString(m_type);
+	    delete m_gin;
+	    m_gin = new CGadget(m_infile+ext, false);
+	   
+	  }
+	if(m_gin->m_isgood)
+	  {
+	    if (!GetHsmlBlock(m_gin))nelem = npcurrent;
+	    if (!GetRhoBlock(m_gin))nelem = npcurrent;
+	  }
         return ans;
     };
 
@@ -468,6 +497,7 @@ protected:
                     " In file: " << g->m_filename << endl;
             retval = false;
         } else cout << "Getting: " << g->rhoname[m_type] << " with " << nelem << " elems.." << endl;
+	rho_loaded=retval;
         return retval;
 
     };
@@ -485,6 +515,7 @@ protected:
                     " In file: " << g->m_filename << endl;
             retval = false;
         } else cout << "Getting: " << g->hsmlname[m_type] << " with " << nelem << " elems.." << endl;
+	hsml_loaded=retval;
         return retval;
 
     };
@@ -502,6 +533,7 @@ protected:
                     " In file: " << g->m_filename << endl;
             retval = false;
         } else cout << "Getting: " << "POS" << " with " << nelem << " elems.." << endl;
+	printStat(pPOS, "pos range: ", nelem*3);
         return retval;
 
     };
@@ -527,14 +559,6 @@ void FreeSphMemory() {
     DeallocateVol3D(vol3dsm);
 }
 
-void printStat(float *pV, const char* txt, int np) {
-    CRange range;
-    range.Reset();
-    for (unsigned int ip = 0; ip < np; ip++) {
-        range.getbound(pV[ip]);
-    }
-    range.print(txt);
-}
 
 bool DoSph2Grid(string fname, string foutname, int type,
         float XC, float YC, float ZC, float RC, int GRID, float zfac = 1.0f, float hsml_in_kpc = 0.5) {
@@ -563,7 +587,7 @@ bool DoSph2Grid(string fname, string foutname, int type,
     /***********************/
     np = data->GetNp();
     nx = ny = nz = GRID;
-    nz *= zfac;
+    nz =(int) (nz*zfac);
 
     cout << "Np: " << np << " GRID= " << nx << " " << ny << " " << nz << endl;
     if (np > 1) {
@@ -575,15 +599,21 @@ bool DoSph2Grid(string fname, string foutname, int type,
         hsml = new float[np];
         if(volume_flag)
         AllocateVol3D(vol3d);
+	std::cout<<"memory allocation done"<<std::endl;
     } else
         exit(13);
 
-
-    printStat(data->pRHO, "Rho range: ", np);
-    printStat(data->pHSML, "HSML range: ", np);
+    if(data->rho_loaded)
+      printStat(data->pRHO, "Rho range: ", np);
+    if(data->hsml_loaded)
+      printStat(data->pHSML, "HSML range: ", np);
     unsigned int ni = 0;
-    float RC2 = RC * 2;
-    float fixed_hsml = hsml_in_kpc * nx / RC2; // Setup the smoothing length in kpc/h
+    float RC2 = RC * 2, BOX=64000.0f;
+    float fixed_hsml = hsml_in_kpc * nx / RC; // Setup the smoothing length in kpc/h
+    std::fill(X, X+np,0.0f);
+    std::fill(rho, rho+np,1.0f);
+    std::fill(hsml, hsml+np,fixed_hsml);
+
     for (unsigned int i = 0, ic = 0; ic < np; ic++) {
         X[ni] = (data->pPOS[i ] - XC);
         Y[ni] = (data->pPOS[i + 1] - YC);
@@ -598,9 +628,14 @@ bool DoSph2Grid(string fname, string foutname, int type,
             X[ni] *= nx / RC2;
             Y[ni] *= ny / RC2;
             Z[ni] *= nz / RC2;
-
-            rho[ni] = data->pRHO[ic];
-            hsml[ni] = data->pHSML[ic] * nx / RC2;
+	    //cout<<"  > "<<X[ni]<<endl;
+	    if(data->rho_loaded && data->hsml_loaded)
+	      {
+		rho[ni] = data->pRHO[ic]*((nx / RC2)*(nx / RC2)*(nx / RC2))*2*2*2*9;
+		hsml[ni] = std::max(1.0f,data->pHSML[ic] * nx / RC2);
+	      }
+		
+	    
             ni++;
         }
         i += 3;
@@ -609,6 +644,8 @@ bool DoSph2Grid(string fname, string foutname, int type,
     printStat(X, "X range: ", ni);
     printStat(Y, "Y range: ", ni);
     printStat(Z, "Z range: ", ni);
+    printStat(hsml, "hsml range: ", ni);
+    printStat(rho, "rho range: ", ni);
     cout << "Particles in region Ni=" << ni << " Out of total: " << np << endl;
     
     np = ni;
@@ -624,11 +661,17 @@ bool DoSph2Grid(string fname, string foutname, int type,
     if (render_flag) {
         CRender *pRenderer = new CRender();
         pRenderer->SetColorTable(13);
-        if (volume_flag)pRenderer->DoRenderByGrid(vol3d, GRID, zfac);
+        if (volume_flag)
+	  pRenderer->DoRenderByGrid(vol3d, GRID, zfac);
         else
-            pRenderer->DoRenderByPoints(X, Y, Z, fixed_hsml, np, GRID);
+	  {
+	    //pRenderer->DoRenderByPoints(X, Y, Z, std::max(fixed_hsml,1.0f), np, GRID);
+	    std::cout<<"start to render"<<std::endl; 
+	    pRenderer->SetMinMaxRho(-6.0f,3.0f);
+	    pRenderer->DoRenderByAdaptivePoints(X, Y, Z, rho, hsml, np, GRID);
+	    //pRenderer->DoRenderByAdaptivePoints(X, Z, Y, rho, hsml, np, GRID);
+	  }
         delete pRenderer;
-
     }
     /////////////////////////////////////////////
 
