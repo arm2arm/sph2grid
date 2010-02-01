@@ -184,3 +184,84 @@ void CRender::DoRenderByPoints(float *X, float *Y, float *Z, float hsml, int np,
 
 }
 
+/// This routine uses adaptive size(HSML) for the partices
+void CRender::DoRenderByAdaptivePoints(float *X, float *Y, float *Z,float *rho, float *hsml, int np, int GRID) {
+
+    CImg<float> image(GRID, GRID, 1, 3,0);
+    CRange range;
+
+    // loop over the all ip particles and find the image(i,j)
+    // cells where it will contribute the mass.
+    // the i and j are the image pixel coordinates;
+    int i = 0, j = 0, irange[2], jrange[2];
+    float  dx, dy, dist, factor_normalize=1.0;
+    
+    CEpanechikov<float> kernel(3);
+    float h1=1.0f;
+    for (int ip = 0; ip < np; ip++) {
+        
+        irange[0] = (int) (X[ip] - hsml[ip]);
+        irange[1] = (int) (X[ip] + hsml[ip]);
+        jrange[0] = (int) (Y[ip] - hsml[ip]);
+        jrange[1] = (int) (Y[ip] + hsml[ip]);
+        clamp2<int>(irange, 0, GRID);
+        clamp2<int>(jrange, 0, GRID);
+        h1=1.0f/hsml[ip];
+	
+        for (j = jrange[0]; j < jrange[1]; j++) {
+            dy=(j-Y[ip])*h1;
+            for (i = irange[0]; i < irange[1]; i++)
+            {
+                dx=(i-X[ip])*h1;
+                dist=(dx*dx+dy*dy);
+                if(dist>4.0f) continue;
+                
+                //std::cout<<"i="<<i<<" j="<<j<<" "<<irange[0]<<" "<<irange[1]
+                //        <<" dx="<<dx<<" dy="<<dy<<" dist="<<dist<<std::endl;
+                // std::cin.get();
+                
+                image(i, j, 0, 0) += kernel.W(std::sqrt(dist))*rho[ip]; //Red
+		//  image(i, j, 0, 1) = image(i, j); //Green
+                //image(i, j, 2) = image(i, j); //Blue
+
+
+            }
+            
+        }
+        if(ip % 100==0){std::cout<<ip<<"     \r";std::cout.flush();}
+    }
+
+    cimg_forXY(image, x, y) {
+        if (image(x, y, 0,0) > 0)
+            image(x, y, 0,0) = std::log10(image(x, y, 0,0));
+        else
+            image(x, y, 0,0) =this->GetMinRho();
+       image(x, y, 0,0) = clamp1<float>(image(x, y, 0,0),this->GetMinRho(), this->GetMaxRho());
+       image(x, y, 0,1)=image(x, y, 0,0);
+       image(x, y, 2)=image(x, y, 0,0);
+       range.getbound(image(x,y,0,0));
+    }
+
+    range.print("pixel range:");
+
+    
+    image = image.normalize(0, 255);
+   CImg<float> palette=CImg<float>::IDL_LUT256(color_table);
+    cimg_forXY(image, x, y) {
+      int ind=image(x, y);
+      const unsigned char col[]={palette(0,ind,0),palette(0,ind,1),palette(0,ind,2)};
+      image(x,y,0,0)=col[0];
+      image(x,y,0,1)=col[1];
+      image(x,y,2)=col[2];
+
+    }
+
+    if(GRID <800)
+        (image).display();
+    
+    std::cout<<"Dumping PNG file"<<std::endl;
+    image.save("sph2grid.png");
+
+
+}
+
