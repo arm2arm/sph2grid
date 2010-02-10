@@ -382,10 +382,12 @@ void CRender::DoRenderByAdaptiveSortedPoints(float *X, float *Y,int *idx,float *
 		ia= (unsigned int)((val- mir)*scv); 
 		image(j, i, 0, 0) = std::max(image(j, i, 0, 0),
 					     /*alpha[ia]*/val);
+		range.getbound(image(j, i, 0, 0));
 	      }
 	  }
 	
         }
+      range1.getbound(dist);
       if(ipp % 1000==0){std::cout<<ipp<<"     \r";std::cout.flush();}
     }
     range1.print("DistRange:");
