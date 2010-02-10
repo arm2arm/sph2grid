@@ -439,7 +439,7 @@ void CRender::DoSPHVolume(float *X, float *Y, float *Z,float *rho, float *hsml, 
     cout << "starting SPHVol" << endl;
     for (int ip = 0; ip < np; ip++) {
         //      dist2=X[ip]*X[ip]+Y[ip]*Y[ip]+Z[ip]*Z[ip];
-        if (ip % 10000 == 0)cout << ip / float(np)*100 << "%" << endl;
+        if (ip % 10000 == 0)cout << ip / float(np)*100 << "%" << "         \r";
         h = hsml[ip];
         i = (X[ip]);
         j = (Y[ip]);
