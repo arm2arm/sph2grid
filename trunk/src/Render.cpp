@@ -86,21 +86,6 @@ void CRender::DoRenderByGrid(float ***vol3d, int GRID, float zfac) {
 
 }
 
-float Wsph(float u) {
-    float retval = 0;
- 
-    if (0 <= u && u <= 1)
-        retval = 1.0f - 3.0f / 2.0f * u * u + 3.0f / 4.0f * u * u * u;
-    else
-        if (1 < u && u <= 2)
-        retval = 1.0f / 4.0f * (2.0f - u)*(2.0f - u)*(2.0f - u);
-    else
-        return 0;
-
-    return retval;//(3.1456f*h*h*h);
-
-
-}
 
 template <class T>
 void clamp(T *val, int num_elems, T min_value, T max_value) {
@@ -394,6 +379,95 @@ void CRender::DoRenderByAdaptiveSortedPoints(float *X, float *Y,int *idx,float *
     range.print("Before scale the pixel range: ");
     range.Reset();
     cimg_forXY(image, x, y) {
+        if (image(x, y, 0,0) > 0)
+            image(x, y, 0,0) = std::log10(image(x, y, 0,0));
+        else
+            image(x, y, 0,0) =this->GetMinRho();
+       image(x, y, 0,0) = clamp1<float>(image(x, y, 0,0),this->GetMinRho(), this->GetMaxRho());
+       image(x, y, 0,1)=image(x, y, 0,0);
+       image(x, y, 2)=image(x, y, 0,0);
+       range.getbound(image(x,y,0,0));
+    }
+
+    range.print("pixel range:");
+
+    
+    image = image.normalize(0, 255);
+   CImg<unsigned char> palette=CImg<unsigned char>::IDL_LUT256(color_table);
+    cimg_forXY(image, x, y) {
+      int ind=(int)image(x, y);
+      const unsigned char col[]={palette(0,ind,0),palette(0,ind,1),palette(0,ind,2)};
+      image(x,y,0,0)=col[0];
+      image(x,y,0,1)=col[1];
+      image(x,y,2)=col[2];
+
+    }
+
+    if(show_image)
+        (image).display();
+    
+    std::cout<<"Dumping PNG file"<<std::endl;
+    image.save(m_outfile.c_str());
+
+
+}
+
+float  CRender::Wsph(float rr, float h) {
+    float retval = 0;
+    float u = rr / h;
+    if (0 <= u && u <= 1)
+        retval = 1.0f - 3.0f / 2.0f * u * u + 3.0f / 4.0f * u * u * u;
+    else
+        if (1 < u && u <= 2)
+        retval = 1.0f / 4.0f * (2.0f - u)*(2.0f - u)*(2.0f - u);
+    else
+        return 0;
+
+    return retval; //(3.1456f*h*h*h);
+
+
+}
+
+void CRender::DoSPHVolume(float *X, float *Y, float *Z,float *rho, float *hsml, int np, int GRID) {
+    float i, j, k;
+    int ii, jj, kk;
+    int nx=GRID, ny=GRID, nz=GRID;
+    float r, h;
+    CImg<float> image(GRID, GRID, 1, 3,0);
+    CRange range,range1;
+  
+    cout << "starting SPHVol" << endl;
+    for (int ip = 0; ip < np; ip++) {
+        //      dist2=X[ip]*X[ip]+Y[ip]*Y[ip]+Z[ip]*Z[ip];
+        if (ip % 10000 == 0)cout << ip / float(np)*100 << "%" << endl;
+        h = hsml[ip];
+        i = (X[ip]);
+        j = (Y[ip]);
+	//        k = (Z[ip]);
+        if (i + h < nx && i - h > 0 && j + h < ny && j - h > 0 /*&& k + h < nz && k - h > 0*/) {
+#ifdef  _OPENMP
+#pragma omp parallel default(shared) 
+#endif
+            {
+#ifdef  _OPENMP
+#pragma omp for private(/*kk,*/ jj, ii,r)	 
+#endif
+               /* for (kk = int(k - h) + 1; kk<int(k + h) + 1; kk += 1)*/ {
+                    for (jj = int(j - h) + 1; jj<int(j + h) + 1; jj += 1)
+                        for (ii = int(i - h) + 1; ii<int(i + h) + 1; ii += 1) {
+			  r = sqrt((i - ii)*(i - ii)+(j - jj)*(j - jj)/*+(k - kk)*(k - kk)*/);
+                           image((int)ii, (int)jj, 0, 0)  += rho[ip] * this->Wsph(r, h);
+			     //vol3d[int(ii)][int(jj)][int(kk)] += rho[ip] * Wsph(r, h);
+                        }
+
+                }
+	       //                if(ip%1000==0)cout<<ip<<"   \r ";
+            }
+        }
+    }
+
+
+  cimg_forXY(image, x, y) {
         if (image(x, y, 0,0) > 0)
             image(x, y, 0,0) = std::log10(image(x, y, 0,0));
         else

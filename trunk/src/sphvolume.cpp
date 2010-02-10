@@ -742,7 +742,8 @@ bool DoSph2Grid(string fname, string foutname, int type,
 		if((int)getEnv("SPH2GRID_MAXINTENSITY",1))
 		  pRenderer->DoRenderByAdaptiveSortedPoints(X, Y,idx,rho, hsml, np, GRID);
 		else
-		  pRenderer->DoRenderByAdaptivePoints(X, Y,Z, rho, hsml, np, GRID);
+		  //pRenderer->DoRenderByAdaptivePoints(X, Y,Z, rho, hsml, np, GRID);
+		  pRenderer->DoSPHVolume(X, Y,Z, rho, hsml, np, GRID);
 	      }
 	  }
         delete pRenderer;
