@@ -671,3 +671,10 @@ default:palette = CImg<unsigned char>::default_LUT256();
 	return palette;
 	}
 #endif
+
+
+
+
+
+
+

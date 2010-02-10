@@ -3,7 +3,9 @@
 #include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
-
+#include <cstdlib>
+#include <sstream>
+#include <string>
 //int __gxx_personality_v0;
 
 //    void    starttimer_(void);
@@ -60,3 +62,22 @@ return x;
 
 };
 
+
+float getEnv(char * name, float defvalue)
+{
+  char *pointer=NULL;
+ 
+  if(pointer=getenv(name))
+    return atof(pointer);
+    return defvalue;
+}
+
+ std::string intToString(int i)
+  {
+    std::stringstream ss;
+    std::string s;
+    ss << i;
+    s = ss.str();
+    
+    return s;
+  }
