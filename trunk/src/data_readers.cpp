@@ -558,14 +558,18 @@ bool CGadget::GetSPHParticles(int type, CRegion reg, bool flag_putin_COM)
 /*ReadOneBlock*/
 unsigned int CGadget::read_block(float *&pV, const char *name, int t)
 {
-    int nall=myhead.npart[t];
-    if(t==6)
+ 
+  
+  int nall=myhead.npart[t];
+  
+  if(t==6)
     {
         nall=0;
         for(int i=0;i<6;i++)
             nall+=myhead.npart[i];
-    }
-    pV=new float[nall];
+    }else 
+      if(t=!0)nall=myhead.npart[0];
+  pV=new float[nall];
   unsigned int sizeall=find_block(&m_file, name);
   cout<<name<<endl;
   if(sizeall<1) return 0;
@@ -841,6 +845,7 @@ bool CGadget::GetFileFormat(ifstream &filein)
 			cout<<"Cannot get file format..."<<endl;
 			return false;
 			}
+		cout<<"We have enabled Byte Swapping!!!"<<endl;
 		}
 	filein.seekg(0, ios_base::beg);
 	return true;	
