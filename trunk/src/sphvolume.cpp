@@ -501,7 +501,25 @@ protected:
                     " In file: " << g->m_filename << endl;
             retval = false;
         } else cout << "Getting: " << g->rhoname[m_type] << " with " << nelem << " elems.." << endl;
+	
 	rho_loaded=retval;
+	if(rho_loaded)
+	  {
+	    double RhoMean=1.9*1.0e-29;// in g*cm^-3;
+	    double OmegaBar=0.04;	    
+	    double UnitMass_in_g= 1.989e43; 	    
+	    double UnitLength_in_cm= 3.085678e21;   /*  code length unit in cm/h */	
+	    double  UnitDensity_in_cgs= UnitMass_in_g/ std::pow(UnitLength_in_cm,3);
+ 
+	    for(int i=0;i<nelem;i++)
+	      {
+		pRHO[i]= float( pRHO[i]* UnitDensity_in_cgs);
+		
+		pRHO[i]/=float(RhoMean*OmegaBar);
+		//	cout<<pRHO[i]<<endl;
+	      }
+	  }
+	
         return retval;
 
     };
@@ -720,8 +738,8 @@ bool DoSph2Grid(string fname, string foutname, int type,
         else
 	  {
 	    pRenderer->SetMinMaxRho(
-				    getEnv("SPH2GRID_MINRHO",-7.0f),
-				    getEnv("SPH2GRID_MAXRHO",3.0f));
+				    getEnv("SPH2GRID_MINRHO",2.0f),
+				    getEnv("SPH2GRID_MAXRHO",9.0f));
 	    //	    pRenderer->DoRenderByPoints(X, Y, Z, std::max(fixed_hsml,1.0f), np, GRID);
 	    std::cout<<"start to render"<<std::endl; 
 	    if(getEnv("SPH2GRID_XYZ",1)){
@@ -740,10 +758,11 @@ bool DoSph2Grid(string fname, string foutname, int type,
 	      {
 		pRenderer->SetOut("sph2grid.png");
 		if((int)getEnv("SPH2GRID_MAXINTENSITY",1))
-		  pRenderer->DoRenderByAdaptiveSortedPoints(X, Y,idx,rho, hsml, np, GRID);
+		  //pRenderer->DoRenderByAdaptiveSortedPoints(X, Y,idx,rho, hsml, np, GRID);
+		  pRenderer->DoSPHVolume(X, Y,idx, rho, hsml, np, GRID);
 		else
-		  //pRenderer->DoRenderByAdaptivePoints(X, Y,Z, rho, hsml, np, GRID);
-		  pRenderer->DoSPHVolume(X, Y,Z, rho, hsml, np, GRID);
+		  pRenderer->DoRenderByAdaptivePoints(X, Y,Z, rho, hsml, np, GRID);
+
 	      }
 	  }
         delete pRenderer;

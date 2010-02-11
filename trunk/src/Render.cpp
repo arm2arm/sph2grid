@@ -128,6 +128,7 @@ float kernel(float u) {
 //X , Y and Z must be in a grid units.
 
 void CRender::DoRenderByPoints(float *X, float *Y, float *Z, float hsml, int np, int GRID) {
+  std::cout<<"RENDER Method: DoRenderByPoints"<<std::endl;
   CImg<float> image(GRID, GRID, 1, 3,0);
     CRange range;
 
@@ -212,7 +213,7 @@ void CRender::DoRenderByPoints(float *X, float *Y, float *Z, float hsml, int np,
 
 /// This routine uses adaptive size(HSML) for the partices
 void CRender::DoRenderByAdaptivePoints(float *X, float *Y, float *Z,float *rho, float *hsml, int np, int GRID) {
-
+  std::cout<<"RENDER Method: DoRenderByAdaptivePoints"<<std::endl;
     CImg<float> image(GRID, GRID, 1, 3,0);
     CRange range,range1;
    
@@ -314,7 +315,7 @@ void CRender::DoRenderByAdaptivePoints(float *X, float *Y, float *Z,float *rho, 
 
 /// This routine uses adaptive size(HSML) for the partices
 void CRender::DoRenderByAdaptiveSortedPoints(float *X, float *Y,int *idx,float *rho, float *hsml, int np, int GRID) {
-
+  std::cout<<"RENDER Method: DoRenderByAdaptiveSortedPoints"<<std::endl;
     CImg<float> image(GRID, GRID, 1, 3,0);
     CRange range,range1;
    
@@ -362,7 +363,7 @@ void CRender::DoRenderByAdaptiveSortedPoints(float *X, float *Y,int *idx,float *
 	    dist=(dx*dx+dy*dy);
 	    
 	    float val=kernel.W(std::sqrt(dist))*rho[ip];
-	    if(val>0)
+	    if(val>mir)
 	      {
 		ia= (unsigned int)((val- mir)*scv); 
 		image(j, i, 0, 0) = std::max(image(j, i, 0, 0),
@@ -423,23 +424,44 @@ float  CRender::Wsph(float rr, float h) {
     else
         return 0;
 
-    return retval; //(3.1456f*h*h*h);
+    return retval/(3.1456f*h*h*h);
 
 
 }
 
-void CRender::DoSPHVolume(float *X, float *Y, float *Z,float *rho, float *hsml, int np, int GRID) {
+void CRender::DoSPHVolume(float *X, float *Y, int *idx,float *rho, float *hsml, int np, int GRID) {
+  std::cout<<"RENDER Method: DoSPHVolume"<<std::endl;
     float i, j, k;
-    int ii, jj, kk;
+    int ii, jj, kk,ip;
     int nx=GRID, ny=GRID, nz=GRID;
-    float r, h;
+    float r, h,val;
     CImg<float> image(GRID, GRID, 1, 3,0);
     CRange range,range1;
   
+
+    unsigned int ia =0;
+    float mir=std::pow(10.0f,min_rho),
+      mar=std::pow(10.f,max_rho),
+      scv=255.0f/(mar-mir)
+      ; 
+    
+    float *alpha=new float[256];
+    for(int i=0;i<256;i++)
+      {
+	alpha[i] = 1.0;
+	float w=1.0f-i/256.0;
+	for(int j=0;j<1;j++)
+	  alpha[i] *= w;
+	alpha[i] *= 1.0f;
+	//cout<<alpha[i]<<endl;
+      }
+   
+    
     cout << "starting SPHVol" << endl;
-    for (int ip = 0; ip < np; ip++) {
+    for (int ipp = 0; ipp < np; ipp++) {
         //      dist2=X[ip]*X[ip]+Y[ip]*Y[ip]+Z[ip]*Z[ip];
-        if (ip % 10000 == 0)cout << ip / float(np)*100 << "%" << "         \r";
+      ip=idx[ipp];
+      if (ipp % 10000 == 0){cout << ipp / float(np)*100 << "%" << "         \r";std::cout.flush();};
         h = hsml[ip];
         i = (X[ip]);
         j = (Y[ip]);
@@ -456,17 +478,30 @@ void CRender::DoSPHVolume(float *X, float *Y, float *Z,float *rho, float *hsml, 
                     for (jj = int(j - h) + 1; jj<int(j + h) + 1; jj += 1)
                         for (ii = int(i - h) + 1; ii<int(i + h) + 1; ii += 1) {
 			  r = sqrt((i - ii)*(i - ii)+(j - jj)*(j - jj)/*+(k - kk)*(k - kk)*/);
-                           image((int)ii, (int)jj, 0, 0)  += rho[ip] * this->Wsph(r, h);
-			     //vol3d[int(ii)][int(jj)][int(kk)] += rho[ip] * Wsph(r, h);
+			  
+			  val=rho[ip] * this->Wsph(r, h);
+			  //if(val>mir)
+			    {
+			      ia= (unsigned int)((val- mir)*scv); 
+			      image((int)jj, (int)ii, 0, 0)  += // rho[ip] * this->Wsph(r, h);
+				std::max(image((int)jj, (int)ii, 0, 0),
+					 /*alpha[ia]*/val);
+
+			      //vol3d[int(ii)][int(jj)][int(kk)] += rho[ip] * Wsph(r, h);
+			      // cout<<rho[ip] * this->Wsph(r, h)<<endl;
+			      range.getbound(image((int)jj, (int)ii, 0, 0));
+			    }
                         }
 
                 }
+	       
 	       //                if(ip%1000==0)cout<<ip<<"   \r ";
             }
         }
     }
 
-
+    range.print("Before scale the pixel range: ");
+    range.Reset();
   cimg_forXY(image, x, y) {
         if (image(x, y, 0,0) > 0)
             image(x, y, 0,0) = std::log10(image(x, y, 0,0));
