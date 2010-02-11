@@ -18,7 +18,8 @@ class CRender {
   void DoRenderByPoints(float *X, float *Y,float *Z, float hsml, int np, int GRID=128);
   void DoRenderByAdaptivePoints(float *X, float *Y, float *Z,float *rho, float *hsml, int np, int GRID);
   void DoRenderByAdaptiveSortedPoints(float *X, float *Y,int *idx,float *rho, float *hsml, int np, int GRID);
-  void DoSPHVolume(float *X, float *Y, float *Z,float *rho, float *hsml, int np, int GRID);
+  void DoSPHVolume(float *X, float *Y, int *idx,float *rho, float *hsml, int np, int GRID);
+
   float GetMinRho(void){return min_rho;};
   float GetMaxRho(void){return max_rho;};
   void SetMinMaxRho(float _min_rho, float _max_rho){
