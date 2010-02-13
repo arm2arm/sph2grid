@@ -504,6 +504,7 @@ class CGadget : public  CReaders
 			rhoname.push_back("RHO3");
 			rhoname.push_back("RHO4");
 			rhoname.push_back("RHO5");
+			rhoname.push_back("RHO1");
 
 			hsmlname.push_back("HSML");
 			hsmlname.push_back("H1  ");
@@ -511,6 +512,7 @@ class CGadget : public  CReaders
 			hsmlname.push_back("H3  ");
 			hsmlname.push_back("H4  ");
 			hsmlname.push_back("HS5 ");
+			hsmlname.push_back("H1  ");
 			
 			uname.push_back("U   ");
 			uname.push_back("RHO1 ");

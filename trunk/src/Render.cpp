@@ -268,8 +268,8 @@ void CRender::DoRenderByAdaptivePoints(float *X, float *Y, float *Z,float *rho, 
 
 		//image(i, j, 0, 1) = image(i, j); //Green
                 //image(i, j, 2) = image(i, j); //Blue
-		//	range.getbound(image(j, i, 0, 0));
-		//range1.getbound(dist);
+		range.getbound(image(j, i, 0, 0));
+		range1.getbound(dist);
 
             }
             
@@ -483,7 +483,7 @@ void CRender::DoSPHVolume(float *X, float *Y, int *idx,float *rho, float *hsml, 
 			  //if(val>mir)
 			    {
 			      ia= (unsigned int)((val- mir)*scv); 
-			      image((int)jj, (int)ii, 0, 0)  += // rho[ip] * this->Wsph(r, h);
+			      image((int)jj, (int)ii, 0, 0)  = // rho[ip] * this->Wsph(r, h);
 				std::max(image((int)jj, (int)ii, 0, 0),
 					 /*alpha[ia]*/val);
 
