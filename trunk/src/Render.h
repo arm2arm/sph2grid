@@ -9,6 +9,23 @@
 #define	_RENDER_H
 #include <string>
 #include <iostream>
+#include <vector>
+struct TMarker{
+  TMarker(int *pos=NULL, int rad_=5, unsigned char *col=NULL):rad(rad_)
+  {
+    if(pos!=NULL)
+      memcpy(&pos[0], &pos[0], 3*sizeof(int));
+    else
+      memset(&pos[0], 0, 3*sizeof(int));
+    if(col!=NULL)
+      memcpy(&color[0], &col[0], 3*sizeof(unsigned char));
+    else
+      memset(&color[0], 255, 3*sizeof(unsigned char));
+  }
+  int pos[3];
+  int rad;
+  unsigned char color[3];
+};
 class CRender {
  public:
   CRender();
@@ -29,6 +46,7 @@ class CRender {
   void   SetColorTable(int i){color_table=i-1;
   std::cout<<"Loading color table="<<color_table<<std::endl;};
   void SetOut(std::string s){m_outfile=s;}
+  std::vector<TMarker> m_markervec;
  private:
   float  Wsph(float, float);
   float min_rho, max_rho;
