@@ -416,7 +416,16 @@ public:
     unsigned int GetNp() {
         return nelem;
     };
-
+  std::vector<float> bhPos;
+  void GetBHParticles()
+  {
+     
+     CGadget *g = new CGadget(m_infile, false);
+     int nparticles = g->read_blockv3(pPosBH,
+				    "POS ",
+                5);
+     
+  }
     void SetAutoCOM(float &x, float &y, float &z) {
         float *pPot = NULL;
         CGadget *g = new CGadget(m_infile, false);

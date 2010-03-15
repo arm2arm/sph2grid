@@ -403,7 +403,9 @@ void CRender::DoRenderByAdaptiveSortedPoints(float *X, float *Y,int *idx,float *
       image(x,y,2)=col[2];
 
     }
-
+    unsigned char col[]={255, 255, 0};
+    for(int i=m_markervec.size()-1;i--;)
+      image.draw_circle(m_markervec[i].pos[0],m_markervec[i].pos[1],m_markervec[i].rad,col);
     if(show_image)
         (image).display();
     
@@ -483,13 +485,13 @@ void CRender::DoSPHVolume(float *X, float *Y, int *idx,float *rho, float *hsml, 
 			  //if(val>mir)
 			    {
 			      ia= (unsigned int)((val- mir)*scv); 
-			      image((int)jj, (int)ii, 0, 0)  = // rho[ip] * this->Wsph(r, h);
-				std::max(image((int)jj, (int)ii, 0, 0),
+			      image((int)ii, (int)jj, 0, 0)  = // rho[ip] * this->Wsph(r, h);
+				std::max(image((int)ii, (int)jj, 0, 0),
 					 /*alpha[ia]*/val);
 
 			      //vol3d[int(ii)][int(jj)][int(kk)] += rho[ip] * Wsph(r, h);
 			      // cout<<rho[ip] * this->Wsph(r, h)<<endl;
-			      range.getbound(image((int)jj, (int)ii, 0, 0));
+			      range.getbound(image((int)ii, (int)jj, 0, 0));
 			    }
                         }
 
