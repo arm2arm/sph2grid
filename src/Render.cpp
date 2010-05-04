@@ -404,8 +404,8 @@ void CRender::DoRenderByAdaptiveSortedPoints(float *X, float *Y,int *idx,float *
 
     }
     unsigned char col[]={255, 255, 0};
-    for(int i=m_markervec.size()-1;i--;)
-      image.draw_circle(m_markervec[i].pos[0],m_markervec[i].pos[1],m_markervec[i].rad,col);
+    /*for(int i=m_markervec.size()-1;i--;)
+      image.draw_circle(m_markervec[i].pos[0],m_markervec[i].pos[1],m_markervec[i].rad,col);*/
     if(show_image)
         (image).display();
     
