@@ -612,7 +612,7 @@ public:
   float *pTEMP;
   float *pRHO;
   float *pPOS;
-
+  float *pPosBH;
 };
 
 void FreeSphMemory() {
