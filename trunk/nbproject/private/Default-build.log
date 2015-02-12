@@ -1,0 +1,38 @@
+/usr/bin/gmake  all-recursive
+gmake[1]: Entering directory `/home/arm2arm/Projects/sph2grid'
+Making all in src
+gmake[2]: Entering directory `/home/arm2arm/Projects/sph2grid/src'
+/usr/bin/g++ -DHAVE_CONFIG_H -I. -I..  -I/usr/X11R6/include -I/home/arm2arm/Projects/CImg   -g3 -gdwarf-2 -MT main.o -MD -MP -MF .deps/main.Tpo -c -o main.o main.cpp
+mv -f .deps/main.Tpo .deps/main.Po
+/usr/bin/g++ -DHAVE_CONFIG_H -I. -I..  -I/usr/X11R6/include -I/home/arm2arm/Projects/CImg   -g3 -gdwarf-2 -MT sphvolume.o -MD -MP -MF .deps/sphvolume.Tpo -c -o sphvolume.o sphvolume.cpp
+sphvolume.cpp: In member function ‘void CGetData::GetBHParticles()’:
+sphvolume.cpp:424: error: ‘class CGadget’ has no member named ‘read_blockv3’
+sphvolume.cpp: In member function ‘void CGetData::SetAutoCOM(float&, float&, float&)’:
+sphvolume.cpp:432: error: ‘class CGadget’ has no member named ‘read_block’
+sphvolume.cpp:446: error: ‘class CGadget’ has no member named ‘read_blockv3’
+sphvolume.cpp:448: error: ‘class CGadget’ has no member named ‘read_blockv3’
+sphvolume.cpp: In member function ‘bool CGetData::GetRhoBlock(CGadget*)’:
+sphvolume.cpp:504: error: ‘class CGadget’ has no member named ‘read_block’
+data_readers.h:718: error: ‘std::vector<std::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::basic_string<char, std::char_traits<char>, std::allocator<char> > > > CGadget::rhoname’ is protected
+sphvolume.cpp:505: error: within this context
+data_readers.h:718: error: ‘std::vector<std::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::basic_string<char, std::char_traits<char>, std::allocator<char> > > > CGadget::rhoname’ is protected
+sphvolume.cpp:509: error: within this context
+data_readers.h:718: error: ‘std::vector<std::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::basic_string<char, std::char_traits<char>, std::allocator<char> > > > CGadget::rhoname’ is protected
+sphvolume.cpp:512: error: within this context
+sphvolume.cpp: In member function ‘bool CGetData::GetUBlock(CGadget*)’:
+sphvolume.cpp:539: error: ‘class CGadget’ has no member named ‘read_block’
+sphvolume.cpp: In member function ‘bool CGetData::GetHsmlBlock(CGadget*)’:
+sphvolume.cpp:573: error: ‘class CGadget’ has no member named ‘read_block’
+data_readers.h:718: error: ‘std::vector<std::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::basic_string<char, std::char_traits<char>, std::allocator<char> > > > CGadget::hsmlname’ is protected
+sphvolume.cpp:574: error: within this context
+data_readers.h:718: error: ‘std::vector<std::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::basic_string<char, std::char_traits<char>, std::allocator<char> > > > CGadget::hsmlname’ is protected
+sphvolume.cpp:579: error: within this context
+data_readers.h:718: error: ‘std::vector<std::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::basic_string<char, std::char_traits<char>, std::allocator<char> > > > CGadget::hsmlname’ is protected
+sphvolume.cpp:582: error: within this context
+sphvolume.cpp: In member function ‘bool CGetData::GetPosBlock(CGadget*)’:
+sphvolume.cpp:592: error: ‘class CGadget’ has no member named ‘read_blockv3’
+gmake[2]: *** [sphvolume.o] Error 1
+gmake[2]: Leaving directory `/home/arm2arm/Projects/sph2grid/src'
+gmake[1]: *** [all-recursive] Error 1
+gmake[1]: Leaving directory `/home/arm2arm/Projects/sph2grid'
+gmake: *** [all] Error 2

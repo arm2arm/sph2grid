@@ -21,6 +21,7 @@ void saveFree(float* v) {
         v = NULL;
     }
 }
+
 void printStat(float *pV, const char* txt, int np) {
     CRange range;
     range.Reset();
@@ -398,12 +399,12 @@ public:
 
     CGetData(string file, int type = 0) : m_infile(file),
     m_type(type), pHSML(NULL),
-    pRHO(NULL), pPOS(NULL),rho_loaded(false), hsml_loaded(false) {
+    pRHO(NULL), pPOS(NULL), rho_loaded(false), hsml_loaded(false) {
 
-        if (!ReadData()) {
+        /*if (!ReadData()) {
             cout << "Fail to read data...exiting" << endl;
             //EXIT_FAIL;
-        }
+        }*/
     };
 
     ~CGetData() {
@@ -416,16 +417,25 @@ public:
     unsigned int GetNp() {
         return nelem;
     };
-  std::vector<float> bhPos;
-  void GetBHParticles()
-  {
-     
-     CGadget *g = new CGadget(m_infile, false);
-     int nparticles = g->read_blockv3(pPosBH,
-				    "POS ",
+    std::vector<float> bhPos;
+
+    void GetBHParticles() {
+
+        CGadget *g = new CGadget(m_infile, false);
+        int nparticles = g->read_blockv3(pPosBH,
+                "POS ",
                 5);
-     
-  }
+
+    }
+
+    void SetRegion(float xc, float yc, float zc, float zfac, float Rc) {
+        m_reg.m_cent[0] = xc;
+        m_reg.m_cent[1] = yc;
+        m_reg.m_cent[2] = zc;
+        m_reg.Zfac = zfac;
+        m_reg.m_R = Rc;
+    }
+
     void SetAutoCOM(float &x, float &y, float &z) {
         float *pPot = NULL;
         CGadget *g = new CGadget(m_infile, false);
@@ -443,59 +453,78 @@ public:
             saveFree(pPot);
             float *pP;
 
-	    int nread=g->read_blockv3(pP,"POS ",6);
+            int nread = g->read_blockv3(pP, "POS ", 6);
 
             if (nparticles != g->read_blockv3(pP,
-                    "POS ",6)){
-	      cout<<nread<<"!="<<nparticles<<endl;
-	      EXIT_FAIL;
-	    };
-            std::cout <<"AutoCOM result:" <<nparticles << " " << ip
-                    << " " << pP[ip*3]
-                    << " " << pP[ip*3 + 1]
-                    << " " << pP[ip*3 + 2] << endl;
-           
-            x = pP[ip*3];
-            y = pP[ip*3 + 1];
-            z = pP[ip*3 + 2];
+                    "POS ", 6)) {
+                cout << nread << "!=" << nparticles << endl;
+                EXIT_FAIL;
+            };
+            std::cout << "AutoCOM result:" << nparticles << " " << ip
+                    << " " << pP[ip * 3]
+                    << " " << pP[ip * 3 + 1]
+                    << " " << pP[ip * 3 + 2] << endl;
+
+            x = pP[ip * 3];
+            y = pP[ip * 3 + 1];
+            z = pP[ip * 3 + 2];
             saveFree(pP);
-           
-            
+
+
         }
 
     };
 public:
-  bool rho_loaded, hsml_loaded;
-protected:
- 
+    bool rho_loaded, hsml_loaded;
+
     bool ReadData() {
         CGadget *m_gin = new CGadget(m_infile, false);
         bool ans;
 
-        ans = GetPosBlock(m_gin);
-        int npcurrent = GetNp(); //store the current number of particles
-	if(m_type!=0)
-	  {
-	    string ext="_rho_"+intToString(m_type);
-	    delete m_gin;
-	    m_gin = new CGadget(m_infile+ext, false);
-	    cout<<m_gin->m_isgood<<endl;
-	  }
-	if(m_gin->m_isgood)
-	  {
-	
-	    if (!GetHsmlBlock(m_gin))nelem = npcurrent;
-	    if (!GetRhoBlock(m_gin))nelem = npcurrent;
-	    if(m_type==0)
-	      if (!GetUBlock(m_gin))
-		{
-		  
-		  nelem = npcurrent;
-		}
-	  }
+        if (!m_gin->good())
+            return false;
+        if (m_gin->m_multifile) {
+            m_gin->GetMYGas(m_reg, m_type);
+            nelem = m_gin->m_data.size();
+            m_gin->printStats();
+            pPOS=new float[nelem*3];
+            pRHO=new float[nelem];
+            pHSML=new float[nelem];
+            for(int i =0;i<nelem;i++){
+                pPOS[i*3+0]=m_gin->m_data[i].Pos[0];
+                pPOS[i*3+1]=m_gin->m_data[i].Pos[1];
+                pPOS[i*3+2]=m_gin->m_data[i].Pos[2];
+                pRHO[i]=m_gin->m_data[i].sph.Rho;
+                pHSML[i]=m_gin->m_data[i].sph.Hsml;                
+            }
+            rho_loaded=true;
+            hsml_loaded=true;
+            delete m_gin;
+            
+            ans = nelem > 0;
+        } else {
+            ans = GetPosBlock(m_gin);
+            int npcurrent = GetNp(); //store the current number of particles
+            if (m_type != 0) {
+                string ext = "_rho_" + intToString(m_type);
+                delete m_gin;
+                m_gin = new CGadget(m_infile + ext, false);
+                cout << m_gin->m_isgood << endl;
+            }
+            if (m_gin->m_isgood) {
 
+                if (!GetHsmlBlock(m_gin))nelem = npcurrent;
+                if (!GetRhoBlock(m_gin))nelem = npcurrent;
+                if (m_type == 0)
+                    if (!GetUBlock(m_gin)) {
+
+                        nelem = npcurrent;
+                    }
+            }
+        }
         return ans;
     };
+protected:
 
     bool GetRhoBlock(CGadget *g) {
         bool retval = true;
@@ -510,29 +539,28 @@ protected:
                     " In file: " << g->m_filename << endl;
             retval = false;
         } else cout << "Getting: " << g->rhoname[m_type] << " with " << nelem << " elems.." << endl;
-	
-	rho_loaded=retval;
-	if(rho_loaded)
-	  {
-	    double RhoMean=1.9*1.0e-29;// in g*cm^-3;
-	    double OmegaBar=0.04;	    
-	    double UnitMass_in_g= 1.989e43; 	    
-	    double UnitLength_in_cm= 3.085678e21;   /*  code length unit in cm/h */	
-	    double  UnitDensity_in_cgs= UnitMass_in_g/ std::pow(UnitLength_in_cm,3);
- 
-	    for(int i=0;i<nelem;i++)
-	      {
-		pRHO[i]= float( pRHO[i]* UnitDensity_in_cgs);
-		
-		pRHO[i]/=float(RhoMean*OmegaBar);
-		//	cout<<pRHO[i]<<endl;
-	      }
-	  }
-	
+
+        rho_loaded = retval;
+        if (rho_loaded) {
+            double RhoMean = 1.9 * 1.0e-29; // in g*cm^-3;
+            double OmegaBar = 0.04;
+            double UnitMass_in_g = 1.989e43;
+            double UnitLength_in_cm = 3.085678e21; /*  code length unit in cm/h */
+            double UnitDensity_in_cgs = UnitMass_in_g / std::pow(UnitLength_in_cm, 3);
+
+            for (int i = 0; i < nelem; i++) {
+                pRHO[i] = float( pRHO[i] * UnitDensity_in_cgs);
+
+                pRHO[i] /= float(RhoMean * OmegaBar);
+                //	cout<<pRHO[i]<<endl;
+            }
+        }
+
         return retval;
 
     };
-   bool GetUBlock(CGadget *g) {
+
+    bool GetUBlock(CGadget *g) {
         bool retval = true;
 
         nelem = 0;
@@ -546,22 +574,22 @@ protected:
             retval = false;
         } else cout << "Getting: " << "U " << " with " << nelem << " elems.." << endl;
 
-	double gamma= 5.0/3.0;
-	double Xh= 0.76;  /* mass fraction of hydrogen */
-	double BOLTZMANN = 1.3806e-16;
+        double gamma = 5.0 / 3.0;
+        double Xh = 0.76; /* mass fraction of hydrogen */
+        double BOLTZMANN = 1.3806e-16;
         double PROTONMASS = 1.6726e-24;
-	double UnitMass_in_g= 1.989e43; 
-	double UnitLength_in_cm= 3.085678e21;   /*  code length unit in cm/h */
-	double  UnitVelocity_in_cm_per_s= 1.0e5;
-	double	UnitTime_in_s= UnitLength_in_cm / UnitVelocity_in_cm_per_s;
-  
-	double   UnitEnergy_in_cgs= UnitMass_in_g * pow(UnitLength_in_cm,2) / pow(UnitTime_in_s,2);
+        double UnitMass_in_g = 1.989e43;
+        double UnitLength_in_cm = 3.085678e21; /*  code length unit in cm/h */
+        double UnitVelocity_in_cm_per_s = 1.0e5;
+        double UnitTime_in_s = UnitLength_in_cm / UnitVelocity_in_cm_per_s;
 
-	double MeanWeight= 4.0/(3*Xh+1+4*Xh) * PROTONMASS;
-	float fac=(float)(MeanWeight/BOLTZMANN * (gamma-1.0)*
-			  UnitEnergy_in_cgs/ UnitMass_in_g);
-	for(int i=0;i<nelem;i++)
-	  pTEMP[i]=(fac* pTEMP[i]);
+        double UnitEnergy_in_cgs = UnitMass_in_g * pow(UnitLength_in_cm, 2) / pow(UnitTime_in_s, 2);
+
+        double MeanWeight = 4.0 / (3 * Xh + 1 + 4 * Xh) * PROTONMASS;
+        float fac = (float) (MeanWeight / BOLTZMANN * (gamma - 1.0) *
+                UnitEnergy_in_cgs / UnitMass_in_g);
+        for (int i = 0; i < nelem; i++)
+            pTEMP[i] = (fac * pTEMP[i]);
         return retval;
 
     };
@@ -573,14 +601,14 @@ protected:
         nelem = g->read_block(pHSML,
                 (char *) g->hsmlname[m_type].c_str(),
                 m_type);
-	//cout<<nelem<<endl;
-	
+        //cout<<nelem<<endl;
+
         if (nelem == 0) {
             cout << "Error reading block:" << g->hsmlname[m_type].c_str() <<
                     " In file: " << g->m_filename << endl;
             retval = false;
         } else cout << "Getting: " << g->hsmlname[m_type] << " with " << nelem << " elems.." << endl;
-	hsml_loaded=retval;
+        hsml_loaded = retval;
         return retval;
 
     };
@@ -598,7 +626,7 @@ protected:
                     " In file: " << g->m_filename << endl;
             retval = false;
         } else cout << "Getting: " << "POS" << " with " << nelem << " elems.." << endl;
-	printStat(pPOS, "pos range: ", nelem*3);
+        printStat(pPOS, "pos range: ", nelem * 3);
         return retval;
 
     };
@@ -608,11 +636,12 @@ protected:
     unsigned int nelem;
     string m_infile;
 public:
-  float *pHSML;
-  float *pTEMP;
-  float *pRHO;
-  float *pPOS;
-  float *pPosBH;
+    CRegion m_reg;
+    float *pHSML;
+    float *pTEMP;
+    float *pRHO;
+    float *pPOS;
+    float *pPosBH;
 };
 
 void FreeSphMemory() {
@@ -625,13 +654,15 @@ void FreeSphMemory() {
     DeallocateVol3D(vol3dsm);
 }
 
-bool rhoSortFunction (int i,int j) { return (rho[i]>rho[j]); }
+bool rhoSortFunction(int i, int j) {
+    return (rho[i] > rho[j]);
+}
 
 bool DoSph2Grid(string fname, string foutname, int type,
         float XC, float YC, float ZC, float RC, int GRID, float zfac = 1.0f, float hsml_in_kpc = 0.5) {
     bool volume_flag = false;
     bool render_flag = true;
-    
+
     int *idx;
 
     /*Some checks */
@@ -650,16 +681,18 @@ bool DoSph2Grid(string fname, string foutname, int type,
     }
     /***********************/
     CGetData *data = new CGetData(fname, type);
-
+    data->SetRegion(XC, YC, ZC, zfac, RC);
+    if (!data->ReadData())return false;
     if (XC == 0 && YC == 0 && ZC == 0)
         data->SetAutoCOM(XC, YC, ZC);
 
     /***********************/
     np = data->GetNp();
     nx = ny = nz = GRID;
-    nz =(int) (nz*zfac);
+    nz = (int) (nz * zfac);
 
     cout << "Np: " << np << " GRID= " << nx << " " << ny << " " << nz << endl;
+
     if (np > 1) {
         X = new float[np];
         Y = new float[np];
@@ -667,34 +700,40 @@ bool DoSph2Grid(string fname, string foutname, int type,
 
         rho = new float[np];
         hsml = new float[np];
-	idx = new int[np];
-        if(volume_flag)
-        AllocateVol3D(vol3d);
-	std::cout<<"memory allocation done"<<std::endl;
+        idx = new int[np];
+        if (volume_flag)
+            AllocateVol3D(vol3d);
+        std::cout << "memory allocation done" << std::endl;
     } else
         exit(13);
 
-    if(data->rho_loaded)
-      printStat(data->pRHO, "Rho range: ", np);
-    if(data->hsml_loaded)
-      printStat(data->pHSML, "HSML range: ", np);
+    if (data->rho_loaded)
+        printStat(data->pRHO, "Rho range: ", np);
+    if (data->hsml_loaded)
+        printStat(data->pHSML, "HSML range: ", np);
     unsigned int ni = 0;
-    float RC2 = RC * 2, BOX=64000.0f;
+    float RC2 = RC * 2;
     float fixed_hsml = hsml_in_kpc * nx / RC; // Setup the smoothing length in kpc/h
-    std::fill(X, X+np,0.0f);
-    std::fill(Y, Y+np,0.0f);
-    std::fill(Z, Z+np,0.0f);
-    std::fill(rho, rho+np,1.0f);
-    std::fill(hsml, hsml+np,std::max(1.0f,fixed_hsml));
+    std::fill(X, X + np, 0.0f);
+    std::fill(Y, Y + np, 0.0f);
+    std::fill(Z, Z + np, 0.0f);
+    std::fill(rho, rho + np, 1.0f);
+    std::fill(hsml, hsml + np, std::max(1.0f, fixed_hsml));
 
     for (unsigned int i = 0, ic = 0; ic < np; ic++) {
-        X[ni] = (data->pPOS[i ] - XC);
-        Y[ni] = (data->pPOS[i + 1] - YC);
-        Z[ni] = (data->pPOS[i + 2] - ZC);
-       
+        if (data->rho_loaded) {
+            X[ni] = (data->pPOS[i ] - XC);
+            Y[ni] = (data->pPOS[i + 1] - YC);
+            Z[ni] = (data->pPOS[i + 2] - ZC);
+        } else {
+            X[ni] = (data->pPOS[i ] - XC);
+            Y[ni] = (data->pPOS[i + 1] - YC);
+            Z[ni] = (data->pPOS[i + 2] - ZC);
+        }
+
         if (X[ni] < RC && X[ni] >-RC &&
                 Y[ni] < RC && Y[ni] >-RC &&
-                Z[ni] < RC*zfac && Z[ni] >-RC*zfac
+                Z[ni] < RC * zfac && Z[ni] >-RC * zfac
                 ) {
             X[ni] += RC;
             Y[ni] += RC;
@@ -702,21 +741,21 @@ bool DoSph2Grid(string fname, string foutname, int type,
             X[ni] *= nx / RC2;
             Y[ni] *= ny / RC2;
             Z[ni] *= nz / RC2;
-	    //cout<<"  > "<<X[ni]<<endl;
-	    if(data->rho_loaded && data->hsml_loaded)
-	      {
-		rho[ni] = data->pRHO[ic];///data->pTEMP[ic]*1e7;//*((nx / RC2)*(nx / RC2)*(nx / RC2));
-		//rho[ni] = data->pTEMP[ic];//*((nx / RC2)*(nx / RC2)*(nx / RC2));
-		hsml[ni] = std::max(1.0f,data->pHSML[ic] * nx / RC2);
-	      }		
-	    idx[ni]=ni;
+            //cout<<"  > "<<X[ni]<<endl;
+            if (data->rho_loaded && data->hsml_loaded) {
+                //cout<<data->pRHO[ic]<<endl;
+                rho[ni] = data->pRHO[ic]; ///data->pTEMP[ic]*1e7;//*((nx / RC2)*(nx / RC2)*(nx / RC2));
+                //rho[ni] = data->pTEMP[ic];//*((nx / RC2)*(nx / RC2)*(nx / RC2));
+                hsml[ni] = std::max(1.0f, data->pHSML[ic] * nx / RC2);
+            }
+            idx[ni] = ni;
             ni++;
         }
         i += 3;
 
     }
-    
-    std::sort(idx, idx+ni, rhoSortFunction);
+
+    std::sort(idx, idx + ni, rhoSortFunction);
     printStat(data->pPOS, "Pos range: ", ni);
     printStat(X, "X range: ", ni);
     printStat(Y, "Y range: ", ni);
@@ -724,7 +763,7 @@ bool DoSph2Grid(string fname, string foutname, int type,
     printStat(hsml, "hsml range: ", ni);
     printStat(rho, "rho range: ", ni);
     cout << "Particles in region Ni=" << ni << " Out of total: " << np << endl;
-   
+
     np = ni;
     if (volume_flag) {
         DoSPHVolume();
@@ -737,43 +776,40 @@ bool DoSph2Grid(string fname, string foutname, int type,
 
     if (render_flag) {
         CRender *pRenderer = new CRender();
-	if((int)getEnv("SPH2GRID_DUMPLUT",0))
-	  {
-	    pRenderer->DumpAllLUT();exit(0);
-	  };
-        pRenderer->SetColorTable((int)getEnv("SPH2GRID_LUT",14));
+        if ((int) getEnv((char *) "SPH2GRID_DUMPLUT", 0)) {
+            pRenderer->DumpAllLUT();
+            exit(0);
+        };
+        pRenderer->SetColorTable((int) getEnv((char*) "SPH2GRID_LUT", 14));
         if (volume_flag)
-	  pRenderer->DoRenderByGrid(vol3d, GRID, zfac);
-        else
-	  {
-	    pRenderer->SetMinMaxRho(
-				    getEnv("SPH2GRID_MINRHO",2.0f),
-				    getEnv("SPH2GRID_MAXRHO",9.0f));
-	    //	    pRenderer->DoRenderByPoints(X, Y, Z, std::max(fixed_hsml,1.0f), np, GRID);
-	    std::cout<<"start to render"<<std::endl; 
-	    if(getEnv("SPH2GRID_XYZ",1)){
-	      pRenderer->SetOut("sph2grid.png");
-	      if((int)getEnv("SPH2GRID_MAXINTENSITY",1))
-		{
-		  pRenderer->DoRenderByAdaptiveSortedPoints(X, Y,idx,rho, hsml, np, GRID);
-		}else
-		  pRenderer->DoRenderByAdaptivePoints(X, Y, Z, rho, hsml, np, GRID);
-	      pRenderer->SetOut("sph2grid_90.png");
-	      if((int)getEnv("SPH2GRID_MAXINTENSITY",1))
-		pRenderer->DoRenderByAdaptiveSortedPoints(X, Z,idx,rho, hsml, np, GRID);
-	      else
-		pRenderer->DoRenderByAdaptivePoints(X, Z, Y, rho, hsml, np, GRID);
-	    }else
-	      {
-		pRenderer->SetOut("sph2grid.png");
-		if((int)getEnv("SPH2GRID_MAXINTENSITY",1))
-		  //pRenderer->DoRenderByAdaptiveSortedPoints(X, Y,idx,rho, hsml, np, GRID);
-		  pRenderer->DoSPHVolume(X, Y,idx, rho, hsml, np, GRID);
-		else
-		  pRenderer->DoRenderByAdaptivePoints(X, Y,Z, rho, hsml, np, GRID);
+            pRenderer->DoRenderByGrid(vol3d, GRID, zfac);
+        else {
+            pRenderer->SetMinMaxRho(
+                    getEnv((char*) "SPH2GRID_MINRHO", 2.0f),
+                    getEnv((char*) "SPH2GRID_MAXRHO", 9.0f));
+            //	    pRenderer->DoRenderByPoints(X, Y, Z, std::max(fixed_hsml,1.0f), np, GRID);
+            std::cout << "start to render" << std::endl;
+            if (getEnv((char*) "SPH2GRID_XYZ", 1)) {
+                pRenderer->SetOut("sph2grid.png");
+                if ((int) getEnv((char*) "SPH2GRID_MAXINTENSITY", 1)) {
+                    pRenderer->DoRenderByAdaptiveSortedPoints(X, Y, idx, rho, hsml, np, GRID);
+                } else
+                    pRenderer->DoRenderByAdaptivePoints(X, Y, Z, rho, hsml, np, GRID);
+                pRenderer->SetOut("sph2grid_90.png");
+                if ((int) getEnv((char*) "SPH2GRID_MAXINTENSITY", 1))
+                    pRenderer->DoRenderByAdaptiveSortedPoints(X, Z, idx, rho, hsml, np, GRID);
+                else
+                    pRenderer->DoRenderByAdaptivePoints(X, Z, Y, rho, hsml, np, GRID);
+            } else {
+                pRenderer->SetOut("sph2grid.png");
+                if ((int) getEnv((char*) "SPH2GRID_MAXINTENSITY", 1))
+                    //pRenderer->DoRenderByAdaptiveSortedPoints(X, Y,idx,rho, hsml, np, GRID);
+                    pRenderer->DoSPHVolume(X, Y, idx, rho, hsml, np, GRID);
+                else
+                    pRenderer->DoRenderByAdaptivePoints(X, Y, Z, rho, hsml, np, GRID);
 
-	      }
-	  }
+            }
+        }
         delete pRenderer;
     }
     /////////////////////////////////////////////
