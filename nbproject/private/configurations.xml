@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configurationDescriptor version="95">
+  <logicalFolder name="root" displayName="root" projectFiles="true" kind="ROOT">
+    <df root="." name="0">
+      <df name="autom4te.cache">
+      </df>
+      <df name="CImg">
+        <df name="plugins">
+          <in>LUT_ALL.rgb.h</in>
+          <in>add_fileformat.h</in>
+          <in>cimgIPL.h</in>
+          <in>cimg_ipl.h</in>
+          <in>cimgmatlab.h</in>
+          <in>draw_gradient.h</in>
+          <in>jpeg_buffer.h</in>
+          <in>loop_macros.h</in>
+          <in>nlmeans.h</in>
+          <in>skeleton.h</in>
+        </df>
+        <in>CImg.h</in>
+      </df>
+      <df name="doc">
+      </df>
+      <df name="idl">
+      </df>
+      <df name="src">
+        <in>Render.cpp</in>
+        <in>Render.h</in>
+        <in>data_readers.cpp</in>
+        <in>data_readers.h</in>
+        <in>main.cpp</in>
+        <in>sphvolume.cpp</in>
+        <in>sphvolume.h</in>
+        <in>utils.cpp</in>
+        <in>utils.h</in>
+      </df>
+      <df name="UTILS">
+        <in>sphvolume.cpp</in>
+        <in>sphvolume.h</in>
+        <in>sphvolume_o.cpp</in>
+      </df>
+      <df name="win32">
+        <df name="sph2grid">
+        </df>
+      </df>
+      <in>config.h</in>
+    </df>
+  </logicalFolder>
+  <projectmakefile>Makefile</projectmakefile>
+  <confs>
+    <conf name="Default" type="0">
+      <toolsSet>
+        <developmentServer>localhost</developmentServer>
+        <platform>2</platform>
+      </toolsSet>
+      <compile>
+        <compiledirpicklist>
+          <compiledirpicklistitem>.</compiledirpicklistitem>
+          <compiledirpicklistitem>${AUTO_FOLDER}</compiledirpicklistitem>
+        </compiledirpicklist>
+        <compiledir>${AUTO_FOLDER}</compiledir>
+        <compilecommandpicklist>
+          <compilecommandpicklistitem>${MAKE} ${ITEM_NAME}.o</compilecommandpicklistitem>
+          <compilecommandpicklistitem>${AUTO_COMPILE}</compilecommandpicklistitem>
+        </compilecommandpicklist>
+        <compilecommand>${AUTO_COMPILE}</compilecommand>
+      </compile>
+      <dbx_gdbdebugger version="1">
+        <gdb_pathmaps>
+        </gdb_pathmaps>
+        <gdb_interceptlist>
+          <gdbinterceptoptions gdb_all="false" gdb_unhandled="true" gdb_unexpected="true"/>
+        </gdb_interceptlist>
+        <gdb_signals>
+        </gdb_signals>
+        <gdb_options>
+          <DebugOptions>
+            <option name="debug_command"
+                    value="&quot;${OUTPUT_PATH}&quot;  /lnew/arm2arm/Projects/JSORCE/CF2/512/Redshift0/cf2gvpecc1pt5__sigdiv_RZA3D_512_500_s2_zinit60_050 1 250000 250000 250000 100000 128 1 1"/>
+          </DebugOptions>
+        </gdb_options>
+        <gdb_buildfirst gdb_buildfirst_overriden="false" gdb_buildfirst_old="false"/>
+      </dbx_gdbdebugger>
+      <nativedebugger version="1">
+        <engine>gdb</engine>
+      </nativedebugger>
+      <runprofile version="9">
+        <runcommandpicklist>
+          <runcommandpicklistitem>"${OUTPUT_PATH}"</runcommandpicklistitem>
+          <runcommandpicklistitem>"${OUTPUT_PATH}"  /lnew/arm2arm/Projects/JSORCE/CF2/512/Redshift0/cf2gvpecc1pt5__sigdiv_RZA3D_512_500_s2_zinit60_050 1 250000 250000 250000 100000 128 1 1</runcommandpicklistitem>
+        </runcommandpicklist>
+        <runcommand>"${OUTPUT_PATH}"  /lnew/arm2arm/Projects/JSORCE/CF2/512/Redshift0/cf2gvpecc1pt5__sigdiv_RZA3D_512_500_s2_zinit60_050 1 250000 250000 250000 100000 128 1 1</runcommand>
+        <rundir>.</rundir>
+        <buildfirst>false</buildfirst>
+        <terminal-type>0</terminal-type>
+        <remove-instrumentation>0</remove-instrumentation>
+        <environment>
+        </environment>
+      </runprofile>
+    </conf>
+  </confs>
+</configurationDescriptor>
