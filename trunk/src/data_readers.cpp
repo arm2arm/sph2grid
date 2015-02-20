@@ -90,7 +90,7 @@ bool GetSnapName(string &snap, int &isnap) {
 
     while (snap.find_first_of("_") != 0) {
         indexCh = snap.find_first_of("_");
-        dig_snap = dig_snap.assign(snap, int(indexCh + 1), int(3));
+        dig_snap = dig_snap.assign(snap, int(indexCh + 1), int(4));
         if (StringToInt(dig_snap, isnap)) {
             snap = dig_snap;
             return true;

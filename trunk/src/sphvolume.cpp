@@ -487,20 +487,21 @@ public:
             m_gin->GetMYGas(m_reg, m_type);
             nelem = m_gin->m_data.size();
             m_gin->printStats();
-            pPOS=new float[nelem*3];
-            pRHO=new float[nelem];
-            pHSML=new float[nelem];
-            for(int i =0;i<nelem;i++){
-                pPOS[i*3+0]=m_gin->m_data[i].Pos[0];
-                pPOS[i*3+1]=m_gin->m_data[i].Pos[1];
-                pPOS[i*3+2]=m_gin->m_data[i].Pos[2];
-                pRHO[i]=m_gin->m_data[i].sph.Rho;
-                pHSML[i]=m_gin->m_data[i].sph.Hsml;                
+            pPOS = new float[nelem * 3];
+            pRHO = new float[nelem];
+            pHSML = new float[nelem];
+            for (int i = 0; i < nelem; i++) {
+                pPOS[i * 3 + 0] = m_gin->m_data[i].Pos[0];
+                pPOS[i * 3 + 1] = m_gin->m_data[i].Pos[1];
+                pPOS[i * 3 + 2] = m_gin->m_data[i].Pos[2];
+                pRHO[i] = m_gin->m_data[i].sph.Rho;
+                pHSML[i] = m_gin->m_data[i].sph.Hsml;
             }
-            rho_loaded=true;
-            hsml_loaded=true;
+            m_gin->printStats();
+            rho_loaded = true;
+            hsml_loaded = true;
             delete m_gin;
-            
+
             ans = nelem > 0;
         } else {
             ans = GetPosBlock(m_gin);
@@ -660,7 +661,7 @@ bool rhoSortFunction(int i, int j) {
 
 bool DoSph2Grid(string fname, string foutname, int type,
         float XC, float YC, float ZC, float RC, int GRID, float zfac = 1.0f, float hsml_in_kpc = 0.5) {
-    bool volume_flag = false;
+    bool volume_flag = (bool) getEnv((char*) "SPH2GRID_DUMPRHO", 0);
     bool render_flag = true;
 
     int *idx;
@@ -675,11 +676,16 @@ bool DoSph2Grid(string fname, string foutname, int type,
         EXIT_FAIL;
     }
     if (type != 0 && volume_flag) {
-        cout << "\nError:\nIn this version of the code\n" <<
+        cout << "\nWarning:\nIn this version of the code\n" <<
                 "the Type  should be  0 you have:  " << type << endl;
-        EXIT_FAIL;
+        //EXIT_FAIL;
     }
     /***********************/
+    std::string outfilename(getEnvStr((char*)"SPH2GRID_OUTFILEMASK","sph2grid"));
+    //cout<<outfilename<<endl;
+    std::string outimage=outfilename+std::string(".png");
+    std::string outimage_90=outfilename+std::string("_90.png");
+    
     CGetData *data = new CGetData(fname, type);
     data->SetRegion(XC, YC, ZC, zfac, RC);
     if (!data->ReadData())return false;
@@ -713,7 +719,8 @@ bool DoSph2Grid(string fname, string foutname, int type,
         printStat(data->pHSML, "HSML range: ", np);
     unsigned int ni = 0;
     float RC2 = RC * 2;
-    float fixed_hsml = hsml_in_kpc * nx / RC; // Setup the smoothing length in kpc/h
+    float fixed_hsml = hsml_in_kpc * nx; // Setup the smoothing length in kpc/h
+    cout << "hsml_2_kpc unit: " << hsml_in_kpc << endl;
     std::fill(X, X + np, 0.0f);
     std::fill(Y, Y + np, 0.0f);
     std::fill(Z, Z + np, 0.0f);
@@ -746,7 +753,7 @@ bool DoSph2Grid(string fname, string foutname, int type,
                 //cout<<data->pRHO[ic]<<endl;
                 rho[ni] = data->pRHO[ic]; ///data->pTEMP[ic]*1e7;//*((nx / RC2)*(nx / RC2)*(nx / RC2));
                 //rho[ni] = data->pTEMP[ic];//*((nx / RC2)*(nx / RC2)*(nx / RC2));
-                hsml[ni] = std::max(1.0f, data->pHSML[ic] * nx / RC2);
+                hsml[ni] = std::max(1.0f, data->pHSML[ic] * fixed_hsml);
             }
             idx[ni] = ni;
             ni++;
@@ -769,8 +776,9 @@ bool DoSph2Grid(string fname, string foutname, int type,
         DoSPHVolume();
 
         cout << "Writing GRID data to the output file: " << foutname << endl;
-        WriteSPHGRIDVolume(foutname, type,
+        WriteSPHGRIDVolume(foutname + string("slice"), type,
                 XC, YC, ZC, RC, GRID);
+        WriteSPHVolume(foutname);
     }
     ////////////////////////////////////////////
 
@@ -778,33 +786,36 @@ bool DoSph2Grid(string fname, string foutname, int type,
         CRender *pRenderer = new CRender();
         if ((int) getEnv((char *) "SPH2GRID_DUMPLUT", 0)) {
             pRenderer->DumpAllLUT();
-            exit(0);
+            //    exit(0);
         };
+
         pRenderer->SetColorTable((int) getEnv((char*) "SPH2GRID_LUT", 14));
         if (volume_flag)
             pRenderer->DoRenderByGrid(vol3d, GRID, zfac);
-        else {
+
+        {
             pRenderer->SetMinMaxRho(
                     getEnv((char*) "SPH2GRID_MINRHO", 2.0f),
                     getEnv((char*) "SPH2GRID_MAXRHO", 9.0f));
             //	    pRenderer->DoRenderByPoints(X, Y, Z, std::max(fixed_hsml,1.0f), np, GRID);
             std::cout << "start to render" << std::endl;
-            if (getEnv((char*) "SPH2GRID_XYZ", 1)) {
-                pRenderer->SetOut("sph2grid.png");
+            
+            if (getEnv((char*) "SPH2GRID_XYZ", 0)) {
+                pRenderer->SetOut(outimage);
                 if ((int) getEnv((char*) "SPH2GRID_MAXINTENSITY", 1)) {
                     pRenderer->DoRenderByAdaptiveSortedPoints(X, Y, idx, rho, hsml, np, GRID);
                 } else
                     pRenderer->DoRenderByAdaptivePoints(X, Y, Z, rho, hsml, np, GRID);
-                pRenderer->SetOut("sph2grid_90.png");
+                pRenderer->SetOut(outimage_90);
                 if ((int) getEnv((char*) "SPH2GRID_MAXINTENSITY", 1))
                     pRenderer->DoRenderByAdaptiveSortedPoints(X, Z, idx, rho, hsml, np, GRID);
                 else
                     pRenderer->DoRenderByAdaptivePoints(X, Z, Y, rho, hsml, np, GRID);
             } else {
-                pRenderer->SetOut("sph2grid.png");
+                pRenderer->SetOut(outimage);
                 if ((int) getEnv((char*) "SPH2GRID_MAXINTENSITY", 1))
-                    //pRenderer->DoRenderByAdaptiveSortedPoints(X, Y,idx,rho, hsml, np, GRID);
-                    pRenderer->DoSPHVolume(X, Y, idx, rho, hsml, np, GRID);
+                    pRenderer->DoRenderByAdaptiveSortedPoints(X, Y, idx, rho, hsml, np, GRID);
+                    //pRenderer->DoSPHVolume(X, Y, idx, rho, hsml, np, GRID);
                 else
                     pRenderer->DoRenderByAdaptivePoints(X, Y, Z, rho, hsml, np, GRID);
 

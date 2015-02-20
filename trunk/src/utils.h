@@ -37,6 +37,7 @@ void print(const char *str){
 std::string intToString(int i);
 #define printOpenGLError() printOglError(__FILE__, __LINE__)
 float getEnv(char * name, float defvalue);
+const char * getEnvStr(char * name, const char defvalue[]);
 int printOglError(char *file, int line);
 float   stoptimer_( int *flag);
 void  starttimer_( void);
