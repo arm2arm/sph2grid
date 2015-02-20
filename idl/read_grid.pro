@@ -19,8 +19,8 @@ end
 device,retain=2,decomposed=0
 
 file='../src/LGR2Mpc_sfrh_143_grid'
-file='../src/snap_497_1024_grid';snap_497_grid'
-file='C:\arm2arm\DATA\MODEL7\MODELS\MODEL7\RUNG2\SNAPS\snap_gal_0.25_sfr_030_grid'
+file='../_sigdiv_RZA3D_1024_500_s2_zinit120_011_grid'
+;file='C:\arm2arm\DATA\MODEL7\MODELS\MODEL7\RUNG2\SNAPS\snap_gal_0.25_sfr_030_grid'
 openr, 1, file
 type=0l
 GRID=0l
